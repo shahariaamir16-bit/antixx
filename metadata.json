@@ -1,0 +1,6 @@
+{
+  "name": "Aurelia Hotel",
+  "description": "A high-end luxury hotel booking website for Aurelia Hotel with Pay-at-Hotel booking, real-time room management, and responsive admin panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

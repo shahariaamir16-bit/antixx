@@ -1,0 +1,156 @@
+{
+  "entities": {
+    "Room": {
+      "title": "Room",
+      "description": "Hotel luxury room or suite entity",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the room"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the suite",
+          "maxLength": 100
+        },
+        "type": {
+          "type": "string",
+          "description": "Category of the room suite",
+          "maxLength": 50
+        },
+        "price": {
+          "type": "number",
+          "description": "Price per night in USD"
+        },
+        "capacity": {
+          "type": "number",
+          "description": "Maximum guest occupancy"
+        },
+        "image": {
+          "type": "string",
+          "description": "Cover image URL"
+        },
+        "description": {
+          "type": "string",
+          "description": "Comprehensive suite description",
+          "maxLength": 500
+        },
+        "amenities": {
+          "type": "array",
+          "description": "List of amenities provided"
+        },
+        "available": {
+          "type": "boolean",
+          "description": "Availability flag"
+        }
+      },
+      "required": ["id", "name", "price", "capacity", "available"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Guest reservation record",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique booking reference ID (e.g. AUR-1234)",
+          "maxLength": 30
+        },
+        "roomId": {
+          "type": "string",
+          "description": "Reference to the booked room ID",
+          "maxLength": 50
+        },
+        "roomName": {
+          "type": "string",
+          "description": "Name of the booked suite",
+          "maxLength": 100
+        },
+        "guestName": {
+          "type": "string",
+          "description": "Primary guest full name",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "description": "Contact email address",
+          "maxLength": 120
+        },
+        "phone": {
+          "type": "string",
+          "description": "Contact phone number",
+          "maxLength": 30
+        },
+        "checkIn": {
+          "type": "string",
+          "description": "Check-in date formatted as YYYY-MM-DD",
+          "maxLength": 20
+        },
+        "checkOut": {
+          "type": "string",
+          "description": "Check-out date formatted as YYYY-MM-DD",
+          "maxLength": 20
+        },
+        "guests": {
+          "type": "number",
+          "description": "Total number of guests"
+        },
+        "totalPrice": {
+          "type": "number",
+          "description": "Total calculated price in USD"
+        },
+        "roomImage": {
+          "type": "string",
+          "description": "Cover photograph URL of the booked suite"
+        },
+        "roomType": {
+          "type": "string",
+          "description": "Suite category"
+        },
+        "nights": {
+          "type": "number",
+          "description": "Total duration of stay in nights"
+        },
+        "arrivalTime": {
+          "type": "string",
+          "description": "Estimated guest check-in arrival time"
+        },
+        "bedPreference": {
+          "type": "string",
+          "description": "Selected bed and suite configuration"
+        },
+        "specialRequests": {
+          "type": "string",
+          "description": "Special instructions or notes",
+          "maxLength": 500
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "Chosen payment terms",
+          "maxLength": 100
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the reservation",
+          "enum": ["Confirmed", "Checked-in", "Completed", "Cancelled"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of reservation creation"
+        }
+      },
+      "required": ["id", "roomId", "roomName", "guestName", "email", "phone", "checkIn", "checkOut", "totalPrice", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/rooms/{roomId}": {
+      "schema": "Room",
+      "description": "Collection of all luxury hotel rooms and suites"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Collection of guest reservations"
+    }
+  }
+}

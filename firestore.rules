@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128;
+    }
+
+    // Default deny for unhandled paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection test document
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+
+    // Rooms collection (CRUD for user & admin)
+    match /rooms/{roomId} {
+      allow get: if isValidId(roomId);
+      allow list: if true;
+      allow create, update: if isValidId(roomId);
+      allow delete: if isValidId(roomId);
+    }
+
+    // Bookings collection (CRUD for user reservations & admin management)
+    match /bookings/{bookingId} {
+      allow get: if isValidId(bookingId);
+      allow list: if true;
+      allow create: if isValidId(bookingId);
+      allow update: if isValidId(bookingId);
+      allow delete: if isValidId(bookingId);
+    }
+  }
+}

@@ -1,0 +1,2372 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurelia Hotel & Resort — Executive Admin Portal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        stone: {
+                            850: '#1c1917',
+                            900: '#121110',
+                            950: '#0a0908',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #0c0a09; }
+        ::-webkit-scrollbar-thumb { background: #292524; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #44403c; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+            50% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.55); }
+        }
+        .live-pulse-card { animation: pulseGlow 2.5s infinite; }
+        
+        @keyframes highlightRow {
+            0% { background-color: rgba(16, 185, 129, 0.4); }
+            100% { background-color: transparent; }
+        }
+        .row-newly-added { animation: highlightRow 3.5s ease-out; }
+        
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: slideUpFade 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        @keyframes modalScaleIn {
+            from { opacity: 0; transform: scale(0.95) translateY(12px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-enter { animation: modalScaleIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        .gold-glow {
+            box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.2);
+        }
+
+        .gold-border-gradient {
+            border-image: linear-gradient(to right, rgba(245, 158, 11, 0.5), rgba(217, 119, 6, 0.2)) 1;
+        }
+
+        .safe-area-bottom {
+            padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+        }
+
+        @media print {
+            header, nav, #toast-container, .no-print, button, .live-pulse-card {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            #tab-content-bookings {
+                display: block !important;
+            }
+            table {
+                width: 100% !important;
+                color: black !important;
+                border: 1px solid #ccc !important;
+            }
+            th, td {
+                color: black !important;
+                border: 1px solid #ddd !important;
+                padding: 6px !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-stone-950 text-stone-100 min-h-screen antialiased selection:bg-amber-500 selection:text-stone-950 flex flex-col pb-20 md:pb-0">
+
+    <!-- Floating Live Alert Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 sm:top-5 sm:right-5 z-50 space-y-2.5 pointer-events-none max-w-sm w-full px-3 sm:px-0"></div>
+
+    <!-- Top Navigation Header -->
+    <header class="bg-stone-900/95 border-b border-stone-800/80 sticky top-0 z-40 backdrop-blur-xl px-3 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between shrink-0 shadow-xl gap-2">
+        <div class="flex items-center space-x-2.5 sm:space-x-3.5 min-w-0">
+            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 flex items-center justify-center text-stone-950 font-serif font-black text-base sm:text-lg shadow-lg shadow-amber-600/25 shrink-0 border border-amber-400/40">
+                A
+            </div>
+            <div class="min-w-0">
+                <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                    <h1 class="text-sm sm:text-base font-serif font-bold text-white tracking-wide truncate">
+                        Aurelia Admin
+                    </h1>
+                    <span class="text-[9px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-sans uppercase font-bold tracking-wider flex items-center gap-1 shrink-0">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span id="conn-badge">Live</span>
+                    </span>
+                </div>
+                <p class="hidden xl:block text-[11px] text-stone-400 truncate">Hotel Suite Management & 0ms Real-Time Reservation Automation</p>
+            </div>
+        </div>
+
+        <!-- Desktop Navigation Navbar -->
+        <nav class="hidden md:flex items-center space-x-1 bg-stone-950/80 p-1 rounded-2xl border border-stone-800/80 shadow-inner">
+            <button onclick="window.adminApp && window.adminApp.switchTab('dashboard')" id="nav-tab-dashboard" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide border border-amber-500/40 bg-amber-500/10 text-amber-400 flex items-center gap-1.5 cursor-pointer transition active:scale-95 shadow-sm">
+                <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+                <span>Dashboard</span>
+            </button>
+            <button onclick="window.adminApp && window.adminApp.switchTab('bookings')" id="nav-tab-bookings" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide border border-transparent text-stone-400 hover:text-stone-200 hover:bg-stone-900 flex items-center gap-1.5 cursor-pointer transition active:scale-95">
+                <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                <span>Reservations</span>
+                <span class="px-1.5 py-0.2 rounded-full bg-stone-800 text-stone-300 text-[10px] font-mono font-bold" id="badge-bookings-count">0</span>
+            </button>
+            <button onclick="window.adminApp && window.adminApp.switchTab('rooms')" id="nav-tab-rooms" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide border border-transparent text-stone-400 hover:text-stone-200 hover:bg-stone-900 flex items-center gap-1.5 cursor-pointer transition active:scale-95">
+                <i data-lucide="home" class="w-3.5 h-3.5"></i>
+                <span>Suites</span>
+                <span class="px-1.5 py-0.2 rounded-full bg-stone-800 text-stone-300 text-[10px] font-mono font-bold" id="badge-rooms-count">6</span>
+            </button>
+            <button onclick="window.adminApp && window.adminApp.switchTab('analytics')" id="nav-tab-analytics" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide border border-transparent text-stone-400 hover:text-stone-200 hover:bg-stone-900 flex items-center gap-1.5 cursor-pointer transition active:scale-95">
+                <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
+                <span>Analytics</span>
+            </button>
+            <button onclick="window.adminApp && window.adminApp.switchTab('logs')" id="nav-tab-logs" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide border border-transparent text-stone-400 hover:text-stone-200 hover:bg-stone-900 flex items-center gap-1.5 cursor-pointer transition active:scale-95">
+                <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+                <span>Logs</span>
+            </button>
+        </nav>
+
+        <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+            <button onclick="window.adminApp && window.adminApp.openAddRoomModal()" class="hidden lg:flex px-3 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold items-center gap-1.5 transition border border-stone-700/60 active:scale-95 cursor-pointer" title="Add Suite">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span>Add Suite</span>
+            </button>
+            <button onclick="window.adminApp && window.adminApp.triggerNewBookingModal()" class="px-3 sm:px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition shadow-lg shadow-amber-500/20 active:scale-95 shrink-0 cursor-pointer" title="Create Reservation">
+                <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+                <span class="hidden sm:inline">New Booking</span>
+                <span class="sm:hidden">Book</span>
+            </button>
+            <button onclick="window.adminApp && window.adminApp.manualSync()" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-stone-800/90 hover:bg-stone-700 text-stone-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer active:scale-95 border border-stone-700/50" title="Sync live data">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span class="hidden xl:inline">Sync</span>
+            </button>
+            <a href="/" class="px-2.5 sm:px-3.5 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold flex items-center gap-1.5 transition border border-stone-700/50 active:scale-95 shrink-0" title="Visit User Facing Website">
+                <i data-lucide="external-link" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span class="hidden sm:inline">Website</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 space-y-5 sm:space-y-6">
+
+        <!-- TAB 0: DASHBOARD OVERVIEW -->
+        <div id="tab-content-dashboard" class="space-y-6">
+            <!-- KPI Metrics Grid (2 columns on mobile, 4 on desktop) -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+                <!-- Gross Revenue -->
+                <div class="bg-gradient-to-br from-stone-900 via-stone-900/90 to-stone-950 border border-stone-800/90 hover:border-amber-500/35 rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden transition group">
+                    <div class="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-amber-500/40 via-amber-400 to-transparent"></div>
+                    <div class="flex items-center justify-between mb-2 sm:mb-3">
+                        <span class="text-[10px] sm:text-xs font-bold text-stone-400 uppercase tracking-wider">Gross Revenue</span>
+                        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+                            <i data-lucide="dollar-sign" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                        </div>
+                    </div>
+                    <div class="text-xl sm:text-3xl font-serif font-black text-white tracking-tight" id="stat-revenue">$0</div>
+                    <div class="text-[10px] sm:text-[11px] text-emerald-400 mt-1.5 flex items-center gap-1 font-semibold truncate">
+                        <i data-lucide="trending-up" class="w-3.5 h-3.5 shrink-0"></i>
+                        <span class="truncate">Live Confirmed Total</span>
+                    </div>
+                </div>
+
+                <!-- Total Bookings -->
+                <div class="bg-gradient-to-br from-stone-900 via-stone-900/90 to-stone-950 border border-stone-800/90 hover:border-blue-500/35 rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden transition group">
+                    <div class="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-blue-500/40 via-blue-400 to-transparent"></div>
+                    <div class="flex items-center justify-between mb-2 sm:mb-3">
+                        <span class="text-[10px] sm:text-xs font-bold text-stone-400 uppercase tracking-wider">Total Bookings</span>
+                        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+                            <i data-lucide="calendar" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                        </div>
+                    </div>
+                    <div class="text-xl sm:text-3xl font-serif font-black text-white tracking-tight" id="stat-bookings">0</div>
+                    <div class="text-[10px] sm:text-[11px] text-blue-400 mt-1.5 flex items-center gap-1 font-semibold truncate">
+                        <i data-lucide="users" class="w-3.5 h-3.5 shrink-0"></i>
+                        <span class="truncate">Guest Reservations</span>
+                    </div>
+                </div>
+
+                <!-- Room Inventory -->
+                <div class="bg-gradient-to-br from-stone-900 via-stone-900/90 to-stone-950 border border-stone-800/90 hover:border-emerald-500/35 rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden transition group">
+                    <div class="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-emerald-500/40 via-emerald-400 to-transparent"></div>
+                    <div class="flex items-center justify-between mb-2 sm:mb-3">
+                        <span class="text-[10px] sm:text-xs font-bold text-stone-400 uppercase tracking-wider">Suites Active</span>
+                        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+                            <i data-lucide="home" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                        </div>
+                    </div>
+                    <div class="text-xl sm:text-3xl font-serif font-black text-white tracking-tight" id="stat-rooms">6 Suites</div>
+                    <div class="text-[10px] sm:text-[11px] text-emerald-400 mt-1.5 flex items-center gap-1 font-semibold truncate">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0 animate-pulse"></span>
+                        <span id="stat-avail-text" class="truncate">Live on Website</span>
+                    </div>
+                </div>
+
+                <!-- Occupancy Rate -->
+                <div class="bg-gradient-to-br from-stone-900 via-stone-900/90 to-stone-950 border border-stone-800/90 hover:border-purple-500/35 rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden transition group">
+                    <div class="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-purple-500/40 via-purple-400 to-transparent"></div>
+                    <div class="flex items-center justify-between mb-2 sm:mb-3">
+                        <span class="text-[10px] sm:text-xs font-bold text-stone-400 uppercase tracking-wider">Occupancy</span>
+                        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+                            <i data-lucide="activity" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                        </div>
+                    </div>
+                    <div class="text-xl sm:text-3xl font-serif font-black text-white tracking-tight" id="stat-occupancy">0%</div>
+                    <div class="text-[10px] sm:text-[11px] text-purple-400 mt-1.5 flex items-center gap-1 font-semibold truncate">
+                        <i data-lucide="pie-chart" class="w-3.5 h-3.5 shrink-0"></i>
+                        <span class="truncate">Real-Time Ratio</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Highlights & Quick Controls -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Recent Bookings Mini List -->
+                <div class="lg:col-span-2 bg-stone-900/80 border border-stone-800 rounded-2xl p-5 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-serif font-bold text-white flex items-center gap-2">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+                            <span>Latest User Website Reservations</span>
+                        </h3>
+                        <button onclick="window.adminApp && window.adminApp.switchTab('bookings')" class="text-xs text-amber-400 hover:underline">View All →</button>
+                    </div>
+                    <div id="dashboard-recent-bookings" class="space-y-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Quick Action Hub -->
+                <div class="bg-stone-900/80 border border-stone-800 rounded-2xl p-5 shadow-xl space-y-4 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-base font-serif font-bold text-white flex items-center gap-2 mb-2">
+                            <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+                            <span>Quick Action Hub</span>
+                        </h3>
+                        <p class="text-xs text-stone-400 mb-4">Manage your hotel operations directly with one click.</p>
+                        <div class="space-y-2.5">
+                            <button onclick="window.adminApp && window.adminApp.openAddRoomModal()" class="w-full text-left p-3 rounded-xl bg-stone-950 border border-stone-800 hover:border-amber-500/40 text-stone-200 text-xs font-semibold flex items-center justify-between transition group">
+                                <span class="flex items-center gap-2.5">
+                                    <i data-lucide="bed-single" class="w-4 h-4 text-amber-400"></i>
+                                    <span>Add New Suite to Website</span>
+                                </span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-stone-500 group-hover:text-amber-400 transition"></i>
+                            </button>
+                            <button onclick="window.adminApp && window.adminApp.triggerNewBookingModal()" class="w-full text-left p-3 rounded-xl bg-stone-950 border border-stone-800 hover:border-amber-500/40 text-stone-200 text-xs font-semibold flex items-center justify-between transition group">
+                                <span class="flex items-center gap-2.5">
+                                    <i data-lucide="calendar-plus" class="w-4 h-4 text-emerald-400"></i>
+                                    <span>Create Manual Reservation</span>
+                                </span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-stone-500 group-hover:text-amber-400 transition"></i>
+                            </button>
+                            <button onclick="window.adminApp && window.adminApp.switchTab('rooms')" class="w-full text-left p-3 rounded-xl bg-stone-950 border border-stone-800 hover:border-amber-500/40 text-stone-200 text-xs font-semibold flex items-center justify-between transition group">
+                                <span class="flex items-center gap-2.5">
+                                    <i data-lucide="sliders" class="w-4 h-4 text-blue-400"></i>
+                                    <span>Edit Room Prices & Availability</span>
+                                </span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-stone-500 group-hover:text-amber-400 transition"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-400 flex items-center gap-2 mt-4">
+                        <i data-lucide="shield-check" class="w-4 h-4 shrink-0"></i>
+                        <span>Cloud Firestore Collection (`bookings` & `rooms`) Live Connected.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 1: BOOKINGS & RESERVATIONS -->
+        <div id="tab-content-bookings" class="space-y-5 hidden">
+            <!-- Search & Filters Bar -->
+            <div class="space-y-3 bg-stone-900/80 p-3.5 sm:p-4 rounded-2xl border border-stone-800/90 shadow-xl">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
+                    <div class="relative flex-1">
+                        <i data-lucide="search" class="w-4 h-4 text-stone-400 absolute left-3.5 top-3.5"></i>
+                        <input 
+                            type="text" 
+                            id="search-bookings" 
+                            oninput="window.adminApp && window.adminApp.filterBookings()"
+                            placeholder="Search by guest name, email, phone, reference (AUR-1234)..." 
+                            class="w-full min-h-[44px] bg-stone-950 border border-stone-800 rounded-xl pl-10 pr-9 py-2.5 text-xs sm:text-sm text-stone-100 placeholder-stone-500 focus:outline-none focus:border-amber-500 transition"
+                        >
+                        <button onclick="document.getElementById('search-bookings').value = ''; window.adminApp.filterBookings();" id="btn-clear-search" class="hidden absolute right-3 top-3 text-stone-500 hover:text-stone-300">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-2 shrink-0">
+                        <select id="filter-status" onchange="window.adminApp && window.adminApp.onStatusSelectChange(this.value)" class="min-h-[44px] bg-stone-950 border border-stone-800 rounded-xl px-3 sm:px-4 py-2 text-xs font-semibold text-stone-300 focus:outline-none focus:border-amber-500">
+                            <option value="all">All Statuses</option>
+                            <option value="Confirmed">Confirmed</option>
+                            <option value="Checked-in">Checked-in</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <button onclick="window.adminApp && window.adminApp.exportBookingsCSV()" class="min-h-[44px] px-3 sm:px-3.5 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-800 text-stone-300 hover:text-amber-400 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm" title="Export Reservations CSV">
+                            <i data-lucide="download" class="w-4 h-4 text-amber-400"></i>
+                            <span class="hidden sm:inline">CSV</span>
+                        </button>
+                        <button onclick="window.adminApp && window.adminApp.printGuestRoster()" class="min-h-[44px] px-3 sm:px-3.5 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-800 text-stone-300 hover:text-amber-400 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm" title="Print Guest Roster">
+                            <i data-lucide="printer" class="w-4 h-4 text-amber-400"></i>
+                            <span class="hidden sm:inline">Print</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Fast Interactive Status Filter Pills (Horizontal Scrollable) -->
+                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1">
+                    <button type="button" onclick="window.adminApp && window.adminApp.setStatusFilter('all')" id="status-pill-all" class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-amber-500/50 bg-amber-500/15 text-amber-400 whitespace-nowrap transition active:scale-95 flex items-center gap-1.5">
+                        <span>All</span>
+                        <span class="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-[10px] font-mono" id="count-all">0</span>
+                    </button>
+                    <button type="button" onclick="window.adminApp && window.adminApp.setStatusFilter('Confirmed')" id="status-pill-Confirmed" class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-stone-800 bg-stone-950 text-stone-400 hover:text-stone-200 whitespace-nowrap transition active:scale-95 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                        <span>Confirmed</span>
+                        <span class="px-1.5 py-0.2 rounded-full bg-stone-800 text-[10px] font-mono" id="count-confirmed">0</span>
+                    </button>
+                    <button type="button" onclick="window.adminApp && window.adminApp.setStatusFilter('Checked-in')" id="status-pill-Checked-in" class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-stone-800 bg-stone-950 text-stone-400 hover:text-stone-200 whitespace-nowrap transition active:scale-95 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        <span>Checked-in</span>
+                        <span class="px-1.5 py-0.2 rounded-full bg-stone-800 text-[10px] font-mono" id="count-checkedin">0</span>
+                    </button>
+                    <button type="button" onclick="window.adminApp && window.adminApp.setStatusFilter('Completed')" id="status-pill-Completed" class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-stone-800 bg-stone-950 text-stone-400 hover:text-stone-200 whitespace-nowrap transition active:scale-95 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                        <span>Completed</span>
+                        <span class="px-1.5 py-0.2 rounded-full bg-stone-800 text-[10px] font-mono" id="count-completed">0</span>
+                    </button>
+                    <button type="button" onclick="window.adminApp && window.adminApp.setStatusFilter('Cancelled')" id="status-pill-Cancelled" class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-stone-800 bg-stone-950 text-stone-400 hover:text-stone-200 whitespace-nowrap transition active:scale-95 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                        <span>Cancelled</span>
+                        <span class="px-1.5 py-0.2 rounded-full bg-stone-800 text-[10px] font-mono" id="count-cancelled">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bookings View Container: Desktop Table & Mobile Cards -->
+            <div class="bg-stone-900/80 border border-stone-800 rounded-2xl shadow-xl overflow-hidden p-0 sm:p-0">
+                <!-- Desktop Data Table (md and up) -->
+                <div class="hidden md:block overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-stone-800 bg-stone-950/60 text-xs font-semibold text-stone-400 uppercase tracking-wider">
+                                <th class="p-4">Ref ID</th>
+                                <th class="p-4">Guest Details</th>
+                                <th class="p-4">Suite Booked</th>
+                                <th class="p-4">Check-in / Out</th>
+                                <th class="p-4">Total Price</th>
+                                <th class="p-4">Payment</th>
+                                <th class="p-4">Status</th>
+                                <th class="p-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookings-table-body" class="divide-y divide-stone-800/60 text-sm">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Responsive Cards (below md) -->
+                <div id="bookings-cards-mobile" class="md:hidden space-y-3 p-3">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <div id="bookings-empty" class="hidden p-12 text-center text-stone-500">
+                    <i data-lucide="calendar-x" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>
+                    <p class="text-base font-medium">No reservations match your filter criteria.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: ROOM SUITES INVENTORY (Add, Remove, Edit) -->
+        <div id="tab-content-rooms" class="space-y-5 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-lg sm:text-xl font-serif font-bold text-white">Suites & Rooms Inventory</h3>
+                    <p class="text-xs text-stone-400">Add new suites, edit pricing, or toggle availability. Changes appear live on the user website immediately.</p>
+                </div>
+                <button onclick="window.adminApp && window.adminApp.openAddRoomModal()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 text-xs font-bold uppercase tracking-wider transition shadow-md flex items-center gap-1.5 cursor-pointer self-start sm:self-auto active:scale-95 shadow-amber-500/20">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Add New Suite</span>
+                </button>
+            </div>
+
+            <!-- Suites Search & Category Filter Bar -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-stone-900/80 p-3 sm:p-3.5 rounded-2xl border border-stone-800 shadow-xl">
+                <div class="relative flex-1">
+                    <i data-lucide="search" class="w-4 h-4 text-stone-400 absolute left-3.5 top-3.5"></i>
+                    <input 
+                        type="text" 
+                        id="search-rooms" 
+                        oninput="window.adminApp && window.adminApp.filterRooms()"
+                        placeholder="Search suite name, view, bed, amenities..." 
+                        class="w-full min-h-[42px] bg-stone-950 border border-stone-800 rounded-xl pl-10 pr-4 py-2 text-xs text-stone-100 placeholder-stone-500 focus:outline-none focus:border-amber-500 transition"
+                    >
+                </div>
+                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                    <button type="button" onclick="window.adminApp && window.adminApp.setRoomTypeFilter('all')" id="room-type-all" class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-amber-500/40 bg-amber-500/10 text-amber-400 whitespace-nowrap active:scale-95 transition">All</button>
+                    <button type="button" onclick="window.adminApp && window.adminApp.setRoomTypeFilter('Single')" id="room-type-Single" class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-stone-800 bg-stone-950 text-stone-400 hover:text-stone-200 whitespace-nowrap active:scale-95 transition">Single</button>
+                    <button type="button" onclick="window.adminApp && window.adminApp.setRoomTypeFilter('Double')" id="room-type-Double" class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-stone-800 bg-stone-950 text-stone-400 hover:text-stone-200 whitespace-nowrap active:scale-95 transition">Double</button>
+                    <button type="button" onclick="window.adminApp && window.adminApp.setRoomTypeFilter('Twin')" id="room-type-Twin" class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-stone-800 bg-stone-950 text-stone-400 hover:text-stone-200 whitespace-nowrap active:scale-95 transition">Twin</button>
+                    <button type="button" onclick="window.adminApp && window.adminApp.setRoomTypeFilter('Suite')" id="room-type-Suite" class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-stone-800 bg-stone-950 text-stone-400 hover:text-stone-200 whitespace-nowrap active:scale-95 transition">Suite</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6" id="rooms-grid">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+        <!-- TAB 3: FINANCIAL & ANALYTICS -->
+        <div id="tab-content-analytics" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-stone-900/80 border border-stone-800 rounded-2xl p-6 shadow-xl space-y-4">
+                    <h3 class="text-lg font-serif font-bold text-white flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="w-5 h-5 text-amber-400"></i>
+                        <span>Revenue Breakdown by Suite Type</span>
+                    </h3>
+                    <p class="text-xs text-stone-400">Distribution of earnings across Aurelia's signature categories.</p>
+                    <div id="revenue-breakdown" class="space-y-3 pt-2">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <div class="bg-stone-900/80 border border-stone-800 rounded-2xl p-6 shadow-xl space-y-4">
+                    <h3 class="text-lg font-serif font-bold text-white flex items-center gap-2">
+                        <i data-lucide="award" class="w-5 h-5 text-amber-400"></i>
+                        <span>Executive Summary & Performance</span>
+                    </h3>
+                    <p class="text-xs text-stone-400">Key metrics for management and revenue optimization.</p>
+                    <div class="space-y-4 pt-2 text-sm text-stone-300">
+                        <div class="p-4 rounded-xl bg-stone-950 border border-stone-800 flex items-center justify-between">
+                            <span>Average Daily Rate (ADR)</span>
+                            <span class="font-mono font-bold text-amber-400" id="stat-adr">$0</span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-stone-950 border border-stone-800 flex items-center justify-between">
+                            <span>RevPAR (Revenue Per Available Room)</span>
+                            <span class="font-mono font-bold text-emerald-400" id="stat-revpar">$0</span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-stone-950 border border-stone-800 flex items-center justify-between">
+                            <span>Preferred Payment Term</span>
+                            <span class="font-semibold text-stone-200">Pay at Hotel (100%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: LIVE ACTIVITY & AUDIT LOGS -->
+        <div id="tab-content-logs" class="space-y-6 hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-serif font-bold text-white">Live Activity & System Audit Trail</h3>
+                    <p class="text-xs text-stone-400">Real-time event stream from user website actions and admin management.</p>
+                </div>
+                <button onclick="window.adminApp && window.adminApp.clearLogs()" class="px-3.5 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold transition cursor-pointer">
+                    Clear Logs
+                </button>
+            </div>
+
+            <div class="bg-stone-900/80 border border-stone-800 rounded-2xl p-6 shadow-xl font-mono text-xs space-y-2 max-h-[500px] overflow-y-auto" id="audit-logs-container">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto border-t border-stone-800/80 bg-stone-900/40 py-6 px-6 text-center text-xs text-stone-500 mb-16 md:mb-0">
+        <p>© 2026 Aurelia Hotel & Resort Executive Operations. Direct 0ms Firestore sync with user website active.</p>
+    </footer>
+
+    <!-- Mobile Fixed Bottom Navigation Bar (Screens < md) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-stone-900/95 border-t border-stone-800/90 backdrop-blur-xl px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom">
+        <button onclick="window.adminApp && window.adminApp.switchTab('dashboard')" id="mobile-nav-dashboard" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl text-amber-400 text-[10px] font-semibold transition active:scale-95 cursor-pointer">
+            <i data-lucide="layout-dashboard" class="w-5 h-5 mb-0.5"></i>
+            <span>Overview</span>
+        </button>
+        <button onclick="window.adminApp && window.adminApp.switchTab('bookings')" id="mobile-nav-bookings" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl text-stone-400 hover:text-stone-200 text-[10px] font-semibold transition relative active:scale-95 cursor-pointer">
+            <i data-lucide="calendar" class="w-5 h-5 mb-0.5"></i>
+            <span>Bookings</span>
+            <span class="absolute -top-0.5 right-1 px-1.5 py-0.2 bg-amber-500 text-stone-950 font-bold rounded-full text-[9px]" id="mobile-badge-bookings-count">0</span>
+        </button>
+        <button onclick="window.adminApp && window.adminApp.switchTab('rooms')" id="mobile-nav-rooms" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl text-stone-400 hover:text-stone-200 text-[10px] font-semibold transition relative active:scale-95 cursor-pointer">
+            <i data-lucide="home" class="w-5 h-5 mb-0.5"></i>
+            <span>Suites</span>
+            <span class="absolute -top-0.5 right-1 px-1.5 py-0.2 bg-stone-800 text-stone-300 font-bold rounded-full text-[9px]" id="mobile-badge-rooms-count">6</span>
+        </button>
+        <button onclick="window.adminApp && window.adminApp.switchTab('analytics')" id="mobile-nav-analytics" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl text-stone-400 hover:text-stone-200 text-[10px] font-semibold transition active:scale-95 cursor-pointer">
+            <i data-lucide="bar-chart-3" class="w-5 h-5 mb-0.5"></i>
+            <span>Analytics</span>
+        </button>
+        <button onclick="window.adminApp && window.adminApp.switchTab('logs')" id="mobile-nav-logs" class="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl text-stone-400 hover:text-stone-200 text-[10px] font-semibold transition active:scale-95 cursor-pointer">
+            <i data-lucide="terminal" class="w-5 h-5 mb-0.5"></i>
+            <span>Logs</span>
+        </button>
+    </nav>
+
+    <!-- MODAL: VIEW BOOKING DETAILS -->
+    <div id="booking-modal" class="fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-md hidden flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-stone-900 border border-stone-800 rounded-2xl sm:rounded-3xl max-w-lg w-full shadow-2xl relative flex flex-col max-h-[92dvh] overflow-hidden animate-fade-in">
+            <div class="flex items-center justify-between border-b border-stone-800/80 p-4 sm:p-5 bg-stone-900/95 sticky top-0 z-10 shrink-0">
+                <h3 class="text-base sm:text-lg font-serif font-bold text-white flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-5 h-5 text-amber-400"></i>
+                    <span>Reservation Details</span>
+                </h3>
+                <button onclick="window.adminApp && window.adminApp.closeBookingModal()" aria-label="Close modal" class="text-stone-400 hover:text-white min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl bg-stone-800/60 hover:bg-stone-800 transition cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="booking-modal-body" class="p-4 sm:p-6 space-y-3 text-sm text-stone-300 overflow-y-auto flex-1">
+                <!-- Populated dynamically -->
+            </div>
+            <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2.5 p-4 sm:p-5 border-t border-stone-800/80 bg-stone-900/95 sticky bottom-0 z-10 shrink-0">
+                <div id="booking-modal-actions" class="flex flex-wrap gap-2">
+                    <!-- Confirm / Cancel buttons dynamically added -->
+                </div>
+                <button onclick="window.adminApp && window.adminApp.closeBookingModal()" class="min-h-[44px] px-5 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold transition cursor-pointer flex items-center justify-center active:scale-95">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT ROOM SUITE -->
+    <div id="room-modal" class="fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-md hidden flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-stone-900 border border-stone-800 rounded-2xl sm:rounded-3xl max-w-xl w-full shadow-2xl relative flex flex-col max-h-[92dvh] overflow-hidden animate-fade-in">
+            <div class="flex items-center justify-between border-b border-stone-800/80 p-4 sm:p-5 bg-stone-900/95 sticky top-0 z-10 shrink-0">
+                <h3 class="text-base sm:text-lg font-serif font-bold text-white flex items-center gap-2" id="room-modal-title">
+                    <i data-lucide="home" class="w-5 h-5 text-amber-400"></i>
+                    <span>Add New Suite</span>
+                </h3>
+                <button onclick="window.adminApp && window.adminApp.closeRoomModal()" aria-label="Close modal" class="text-stone-400 hover:text-white min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl bg-stone-800/60 hover:bg-stone-800 transition cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="room-form" onsubmit="window.adminApp && window.adminApp.handleRoomFormSubmit(event)" class="overflow-y-auto p-4 sm:p-6 space-y-4 text-xs flex-1">
+                <input type="hidden" id="room-form-id" value="">
+                <div>
+                    <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[11px]">Suite Name</label>
+                    <input type="text" id="room-form-name" required placeholder="e.g. Royal Presidential Penthouse" class="w-full min-h-[44px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-stone-100 text-sm focus:outline-none focus:border-amber-500">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div>
+                        <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[11px]">Suite Type / Category</label>
+                        <select id="room-form-type" class="w-full min-h-[44px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                            <option value="Single">Single</option>
+                            <option value="Double">Double</option>
+                            <option value="Twin">Twin</option>
+                            <option value="Suite">Suite</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[11px]">Nightly Rate ($ USD)</label>
+                        <input type="number" id="room-form-price" required min="50" max="10000" placeholder="e.g. 450" class="w-full min-h-[44px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-stone-100 text-sm focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div>
+                        <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[11px]">Guest Capacity</label>
+                        <input type="number" id="room-form-capacity" required min="1" max="10" placeholder="e.g. 4" class="w-full min-h-[44px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-stone-100 text-sm focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[11px]">Availability Status</label>
+                        <select id="room-form-available" class="w-full min-h-[44px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                            <option value="true">Available for Booking</option>
+                            <option value="false">Unavailable / Maintenance</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[11px]">Suite Photograph</label>
+                    <div class="space-y-2">
+                        <!-- Preview Thumbnail -->
+                        <div class="flex items-center gap-3 p-2.5 bg-stone-950 rounded-xl border border-stone-800">
+                            <img id="room-form-preview" src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80" alt="Preview" class="w-16 h-12 object-cover rounded-lg border border-stone-700 shrink-0">
+                            <div class="flex-1 min-w-0">
+                                <span class="text-[11px] text-stone-300 font-medium block truncate" id="room-form-preview-label">Active suite photo</span>
+                                <span class="text-[10px] text-stone-500">Upload a new photo from device or choose a preset below</span>
+                            </div>
+                        </div>
+
+                        <!-- File Input -->
+                        <input type="file" id="room-form-image-file" accept="image/*" onchange="window.adminApp && window.adminApp.handleImageFileChange(this)" class="w-full text-xs text-stone-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-stone-950 hover:file:bg-amber-400 file:cursor-pointer bg-stone-950 border border-stone-800 rounded-xl cursor-pointer">
+                        <input type="hidden" id="room-form-existing-image" value="">
+
+                        <!-- Quick Luxury Presets -->
+                        <div class="pt-1">
+                            <span class="text-[10px] uppercase font-semibold text-stone-400 block mb-1">Or Pick Luxury Preset Photo:</span>
+                            <div class="grid grid-cols-4 gap-1.5">
+                                <button type="button" onclick="window.adminApp && window.adminApp.pickPresetImage('https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80', 'Oceanfront Executive')" class="p-1 rounded-lg bg-stone-950 border border-stone-800 hover:border-amber-500 text-[10px] text-stone-300 truncate transition active:scale-95 text-center">
+                                    Oceanfront
+                                </button>
+                                <button type="button" onclick="window.adminApp && window.adminApp.pickPresetImage('https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1200&q=80', 'Presidential Penthouse')" class="p-1 rounded-lg bg-stone-950 border border-stone-800 hover:border-amber-500 text-[10px] text-stone-300 truncate transition active:scale-95 text-center">
+                                    Penthouse
+                                </button>
+                                <button type="button" onclick="window.adminApp && window.adminApp.pickPresetImage('https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?auto=format&fit=crop&w=1200&q=80', 'Garden Villa Retreat')" class="p-1 rounded-lg bg-stone-950 border border-stone-800 hover:border-amber-500 text-[10px] text-stone-300 truncate transition active:scale-95 text-center">
+                                    Garden Villa
+                                </button>
+                                <button type="button" onclick="window.adminApp && window.adminApp.pickPresetImage('https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80', 'Royal Honeymoon')" class="p-1 rounded-lg bg-stone-950 border border-stone-800 hover:border-amber-500 text-[10px] text-stone-300 truncate transition active:scale-95 text-center">
+                                    Honeymoon
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Essential Hotel Room Specifications (Standard Hotelier Details) -->
+                <div class="p-3.5 bg-stone-950/80 rounded-xl border border-stone-800 space-y-3">
+                    <span class="text-[11px] font-bold text-amber-400 uppercase tracking-wider block flex items-center gap-1.5">
+                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                        <span>Essential Hotel Specifications</span>
+                    </span>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[10px]">Room Size / Floor Area</label>
+                            <input type="text" id="room-form-size" placeholder="e.g. 520 sq.ft. (48 m²)" class="w-full min-h-[42px] bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[10px]">Bed Type & Configuration</label>
+                            <input type="text" id="room-form-bed" placeholder="e.g. 1 King Size Bed (Plush)" class="w-full min-h-[42px] bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[10px]">Room / Window View</label>
+                            <input type="text" id="room-form-view" placeholder="e.g. Oceanfront Panoramic Horizon" class="w-full min-h-[42px] bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[10px]">Bathroom Features</label>
+                            <input type="text" id="room-form-bathroom" placeholder="e.g. Italian Marble Bath with Rainfall Shower" class="w-full min-h-[42px] bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[10px]">Floor / Level</label>
+                            <input type="text" id="room-form-floor" placeholder="e.g. Floors 12 - 25" class="w-full min-h-[42px] bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[10px]">Smoking Policy</label>
+                            <select id="room-form-smoking" class="w-full min-h-[42px] bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                                <option value="100% Non-Smoking Room">100% Non-Smoking</option>
+                                <option value="Smoking Permitted on Private Balcony">Smoking on Balcony Only</option>
+                                <option value="Designated Smoking Room">Smoking Allowed</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[10px]">Cancellation Policy</label>
+                            <input type="text" id="room-form-cancellation" placeholder="e.g. Free cancellation until 24h prior" class="w-full min-h-[42px] bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[11px]">Suite Description</label>
+                    <textarea id="room-form-desc" rows="3" required placeholder="Describe the ambiance, balcony, view, bedding..." class="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-stone-100 text-xs focus:outline-none focus:border-amber-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-stone-400 font-semibold mb-1 uppercase tracking-wider text-[11px]">Amenities (Comma-separated)</label>
+                    <input type="text" id="room-form-amenities" placeholder="Ocean View, King Bed, Free WiFi, Jacuzzi, Balcony" class="w-full min-h-[44px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                </div>
+            </form>
+            <div class="flex justify-end gap-3 p-4 sm:p-5 border-t border-stone-800/80 bg-stone-900/95 sticky bottom-0 z-10 shrink-0">
+                <button type="button" onclick="window.adminApp && window.adminApp.closeRoomModal()" class="min-h-[44px] px-5 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold flex items-center justify-center cursor-pointer active:scale-95">Cancel</button>
+                <button type="submit" form="room-form" id="btn-save-room" class="min-h-[44px] px-6 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 text-xs font-bold uppercase tracking-wider shadow-md flex items-center justify-center cursor-pointer transition active:scale-95 shadow-amber-500/20">Save & Publish to Website</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CONFIRM ACTION (REPLACES WINDOW.CONFIRM) -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-stone-900 border border-stone-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
+            <div class="flex items-center gap-3">
+                <div id="confirm-modal-icon-bg" class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0">
+                    <i data-lucide="alert-triangle" class="w-5 h-5" id="confirm-modal-icon"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-serif font-bold text-white" id="confirm-modal-title">Confirm Action</h3>
+                    <p class="text-xs text-stone-400 mt-0.5" id="confirm-modal-subtitle">Permanent Change</p>
+                </div>
+            </div>
+            <p class="text-xs text-stone-300 leading-relaxed" id="confirm-modal-message">
+                Are you sure you want to proceed?
+            </p>
+            <div class="flex justify-end gap-3 pt-3 border-t border-stone-800">
+                <button type="button" onclick="window.adminApp && window.adminApp.closeConfirmModal()" class="min-h-[42px] px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" id="confirm-modal-btn" class="min-h-[42px] px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-2 cursor-pointer active:scale-95">
+                    <span>Confirm</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CREATE MANUAL BOOKING (ENHANCED WITH FULL LANDING PAGE PARAMETERS) -->
+    <div id="new-booking-modal" class="fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-stone-900 border border-stone-800 rounded-2xl max-w-xl w-full p-4 sm:p-6 shadow-2xl relative space-y-4 max-h-[92dvh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-stone-800 pb-3">
+                <div>
+                    <h3 class="text-base sm:text-lg font-serif font-bold text-white flex items-center gap-2">
+                        <i data-lucide="calendar-plus" class="w-5 h-5 text-amber-400"></i>
+                        <span>Executive Suite Reservation</span>
+                    </h3>
+                    <p class="text-[11px] text-stone-400 mt-0.5">Complete guest reservation with all landing page & concierge options</p>
+                </div>
+                <button onclick="window.adminApp && window.adminApp.closeNewBookingModal()" aria-label="Close modal" class="text-stone-400 hover:text-white min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl bg-stone-800/50 hover:bg-stone-800 transition cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="new-booking-form" onsubmit="window.adminApp && window.adminApp.handleNewBookingSubmit(event)" class="space-y-4 text-xs">
+                
+                <!-- 1. SUITE SELECTION & LIVE LANDING SPOTLIGHT -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-stone-400 font-semibold uppercase tracking-wider text-[11px]">1. Select Suite / Room</label>
+                        <span class="text-[10px] text-amber-500 font-medium">Synchronized with live website</span>
+                    </div>
+                    <select id="booking-form-room" onchange="window.adminApp && window.adminApp.onBookingRoomChange()" class="w-full min-h-[44px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                    </select>
+
+                    <!-- Live Suite Card -->
+                    <div id="booking-room-spotlight" class="p-3 bg-stone-950 rounded-xl border border-stone-800 flex items-center gap-3">
+                        <img id="booking-room-img" src="" alt="Suite cover" class="w-16 h-14 object-cover rounded-lg border border-stone-700 shrink-0">
+                        <div class="flex-1 min-w-0 space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span id="booking-room-name" class="font-serif font-bold text-white text-xs truncate">Luxury Suite</span>
+                                <span id="booking-room-type-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30">Suite</span>
+                            </div>
+                            <div class="text-[11px] text-stone-400 flex items-center gap-3">
+                                <span>Rate: <strong id="booking-room-rate" class="text-emerald-400 font-mono font-bold">$220</strong> / night</span>
+                                <span>•</span>
+                                <span id="booking-room-capacity">Up to 2 Guests</span>
+                            </div>
+                            <div id="booking-room-amenities" class="text-[10px] text-stone-500 truncate">
+                                Ocean View, King Bed, Free WiFi
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. GUEST IDENTIFICATION -->
+                <div class="space-y-2 pt-2 border-t border-stone-800">
+                    <label class="block text-stone-400 font-semibold uppercase tracking-wider text-[11px]">2. Guest Information</label>
+                    <div>
+                        <input type="text" id="booking-form-name" required placeholder="Guest Full Name (e.g. Eleanor Vance)" class="w-full min-h-[44px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-stone-100 text-sm focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <input type="email" id="booking-form-email" required placeholder="Guest Email (guest@example.com)" class="w-full min-h-[44px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <input type="tel" id="booking-form-phone" placeholder="Phone (+1 (555) 000-0000)" class="w-full min-h-[44px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. STAY DATES & DURATION -->
+                <div class="space-y-2 pt-2 border-t border-stone-800">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-stone-400 font-semibold uppercase tracking-wider text-[11px]">3. Stay Schedule & Arrival</label>
+                        <span id="booking-nights-badge" class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold text-[10px] border border-amber-500/30">3 Nights Stay</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-stone-500 text-[10px] uppercase font-semibold mb-1">Check-In Date</label>
+                            <input type="date" id="booking-form-checkin" required onchange="window.adminApp && window.adminApp.recalcBookingPrice()" class="w-full min-h-[42px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-stone-500 text-[10px] uppercase font-semibold mb-1">Check-Out Date</label>
+                            <input type="date" id="booking-form-checkout" required onchange="window.adminApp && window.adminApp.recalcBookingPrice()" class="w-full min-h-[42px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-stone-500 text-[10px] uppercase font-semibold mb-1">Estimated Check-In Arrival Time</label>
+                        <select id="booking-form-arrival" class="w-full min-h-[42px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                            <option value="3:00 PM (Standard Check-in)">3:00 PM (Standard Check-in)</option>
+                            <option value="12:00 PM - 2:00 PM (Early Check-in Request)">12:00 PM - 2:00 PM (Early Check-in Request)</option>
+                            <option value="6:00 PM - 8:00 PM (Evening Arrival)">6:00 PM - 8:00 PM (Evening Arrival)</option>
+                            <option value="8:00 PM - 11:00 PM (Late Night Arrival)">8:00 PM - 11:00 PM (Late Night Arrival)</option>
+                            <option value="After 11:00 PM (Midnight Check-in)">After 11:00 PM (Midnight Check-in)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 4. GUEST COUNT & BEDDING PREFERENCE (LANDING PAGE SPEC) -->
+                <div class="space-y-2 pt-2 border-t border-stone-800">
+                    <label class="block text-stone-400 font-semibold uppercase tracking-wider text-[11px]">4. Occupancy & Bedding Preference</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-stone-500 text-[10px] uppercase font-semibold mb-1">Guests Count</label>
+                            <input type="number" id="booking-form-guests" required min="1" max="10" value="2" class="w-full min-h-[42px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-stone-500 text-[10px] uppercase font-semibold mb-1">Bed Configuration</label>
+                            <select id="booking-form-bedding" class="w-full min-h-[42px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                                <option value="1 King Size Plush Bed (Hypoallergenic goose down)">1 King Size Plush Bed (Goose down)</option>
+                                <option value="2 Twin Bed Configuration">2 Twin Bed Configuration</option>
+                                <option value="1 King Bed + Rollaway Bed">1 King Bed + Rollaway Bed</option>
+                                <option value="Hypoallergenic Pillows & Duvet Only">Hypoallergenic Bedding Setup</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. BILLING & PAYMENT TERMS (LANDING PAGE POLICY) -->
+                <div class="space-y-2 pt-2 border-t border-stone-800">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-stone-400 font-semibold uppercase tracking-wider text-[11px]">5. Pricing & Payment Policy</label>
+                        <span id="booking-rate-formula" class="text-[10px] text-stone-400 font-mono font-medium">$220 × 3 = $660</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-stone-500 text-[10px] uppercase font-semibold mb-1">Total Calculated Rate ($ USD)</label>
+                            <input type="number" id="booking-form-price" required min="1" value="660" class="w-full min-h-[42px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2 text-stone-100 font-mono font-bold text-sm focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-stone-500 text-[10px] uppercase font-semibold mb-1">Payment Method</label>
+                            <select id="booking-form-payment" class="w-full min-h-[42px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                                <option value="Pay at Hotel (Cash / Card at Check-in)">Pay at Hotel (Cash / Card at Check-in)</option>
+                                <option value="Credit Card (Terminal / Pre-authorized)">Credit Card (Processed at Front Desk)</option>
+                                <option value="Cash Payment at Front Desk">Cash Payment at Front Desk</option>
+                                <option value="Corporate Direct Billing / Invoice">Corporate Direct Billing / Invoice</option>
+                                <option value="VIP / Complimentary Executive Stay">VIP / Complimentary Executive Stay</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-stone-500 text-[10px] uppercase font-semibold mb-1">Initial Reservation Status</label>
+                        <select id="booking-form-status" class="w-full min-h-[42px] bg-stone-950 border border-stone-800 rounded-xl px-4 py-2 text-stone-100 text-xs focus:outline-none focus:border-amber-500">
+                            <option value="Confirmed">Confirmed (Guaranteed Reservation)</option>
+                            <option value="Checked-in">Checked-in (Guest in Residence)</option>
+                            <option value="Completed">Completed (Past Stay)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 6. LUXURY CONCIERGE PERKS & SPECIAL REQUESTS (LANDING PAGE PERKS) -->
+                <div class="space-y-2 pt-2 border-t border-stone-800">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-stone-400 font-semibold uppercase tracking-wider text-[11px]">6. Luxury Perks & Concierge Notes</label>
+                        <span class="text-[10px] text-stone-500">Click to add VIP perks</span>
+                    </div>
+                    
+                    <!-- Quick Perk Chips -->
+                    <div class="flex flex-wrap gap-1.5 pt-1">
+                        <button type="button" onclick="window.adminApp && window.adminApp.addBookingPerk('Oceanfront View Priority')" class="px-2 py-1 rounded-lg bg-stone-950 border border-stone-800 hover:border-amber-500 text-[10px] text-stone-300 transition active:scale-95">
+                            + Oceanfront View
+                        </button>
+                        <button type="button" onclick="window.adminApp && window.adminApp.addBookingPerk('High Floor Suite Priority')" class="px-2 py-1 rounded-lg bg-stone-950 border border-stone-800 hover:border-amber-500 text-[10px] text-stone-300 transition active:scale-95">
+                            + High Floor
+                        </button>
+                        <button type="button" onclick="window.adminApp && window.adminApp.addBookingPerk('Anniversary Setup with Champagne')" class="px-2 py-1 rounded-lg bg-stone-950 border border-stone-800 hover:border-amber-500 text-[10px] text-stone-300 transition active:scale-95">
+                            + Anniversary Champagne
+                        </button>
+                        <button type="button" onclick="window.adminApp && window.adminApp.addBookingPerk('Honeymoon Rose Petals Turndown')" class="px-2 py-1 rounded-lg bg-stone-950 border border-stone-800 hover:border-amber-500 text-[10px] text-stone-300 transition active:scale-95">
+                            + Rose Petals
+                        </button>
+                        <button type="button" onclick="window.adminApp && window.adminApp.addBookingPerk('Airport Limousine Transfer')" class="px-2 py-1 rounded-lg bg-stone-950 border border-stone-800 hover:border-amber-500 text-[10px] text-stone-300 transition active:scale-95">
+                            + Airport Transfer
+                        </button>
+                        <button type="button" onclick="window.adminApp && window.adminApp.addBookingPerk('Chef Artisanal Breakfast in Suite')" class="px-2 py-1 rounded-lg bg-stone-950 border border-stone-800 hover:border-amber-500 text-[10px] text-stone-300 transition active:scale-95">
+                            + Chef In-Suite Breakfast
+                        </button>
+                    </div>
+
+                    <textarea id="booking-form-notes" rows="2" placeholder="Special requests, dietary preferences, or front-desk notes..." class="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-stone-100 text-xs focus:outline-none focus:border-amber-500"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-stone-800">
+                    <button type="button" onclick="window.adminApp && window.adminApp.closeNewBookingModal()" class="min-h-[44px] px-5 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold flex items-center justify-center cursor-pointer">Cancel</button>
+                    <button type="submit" id="btn-save-booking" class="min-h-[44px] px-6 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 text-xs font-bold uppercase tracking-wider shadow-lg shadow-amber-600/25 flex items-center justify-center cursor-pointer transition active:scale-95">
+                        <i data-lucide="check" class="w-4 h-4 mr-1.5"></i>
+                        <span>Confirm & Create Reservation</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FIREBASE FIRESTORE SDK & REAL-TIME AUTOMATION LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { 
+            getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, getDocs 
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        // Exact Firebase credentials matching firebase-applet-config.json
+        const firebaseConfig = {
+            projectId: "peak-path-m41j7",
+            appId: "1:291165002498:web:ba2a24bb9c58de5e76401b",
+            apiKey: "AIzaSyBByjxTY29rBI3lj9JdGyQhEyusLPzVBhA",
+            authDomain: "peak-path-m41j7.firebaseapp.com",
+            firestoreDatabaseId: "ai-studio-aureliahotel-5aad9789-4612-48ab-8ca3-0df4f01716be",
+            storageBucket: "peak-path-m41j7.firebasestorage.app",
+            messagingSenderId: "291165002498"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+        // Core State
+        let stateRooms = [];
+        let stateBookings = [];
+        let newlyAddedBookingId = null;
+        let activityLogs = [
+            { time: new Date().toLocaleTimeString(), action: "FIRESTORE_INIT", details: "Connected to Cloud Firestore database. Listening for user bookings..." }
+        ];
+
+        // BroadcastChannel for 0ms cross-tab transfer
+        let bc = null;
+        if (typeof BroadcastChannel !== 'undefined') {
+            bc = new BroadcastChannel('aurelia_realtime_sync');
+        }
+
+        function notifySync() {
+            try {
+                localStorage.setItem('aurelia_rooms_sync_trigger', Date.now().toString());
+                localStorage.setItem('aurelia_bookings_sync_trigger', Date.now().toString());
+                if (bc) {
+                    bc.postMessage({ type: 'ROOM_CHANGED', timestamp: Date.now() });
+                }
+            } catch {}
+        }
+
+        // Live Clock
+        function updateClock() {
+            const now = new Date();
+            const el = document.getElementById('live-clock');
+            if (el) el.innerText = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function logAction(action, details) {
+            activityLogs.unshift({
+                time: new Date().toLocaleTimeString(),
+                action,
+                details
+            });
+            if (activityLogs.length > 50) activityLogs.pop();
+            renderLogs();
+        }
+
+        // Toast Alert on New User Booking
+        function showNewBookingToast(booking) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = "pointer-events-auto bg-stone-900 border-2 border-emerald-500 rounded-2xl p-4 shadow-2xl shadow-emerald-500/20 max-w-md w-full flex items-start space-x-3 transition transform duration-500 translate-y-0 opacity-100";
+            toast.innerHTML = `
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">⚡ New Reservation Received</span>
+                        <span class="text-[10px] text-stone-500 font-mono">${new Date().toLocaleTimeString()}</span>
+                    </div>
+                    <h5 class="text-sm font-bold text-white mt-0.5">${booking.guestName || 'Guest'} booked ${booking.roomName || 'Luxury Suite'}</h5>
+                    <p class="text-xs text-stone-400 mt-0.5">Ref: <span class="font-mono text-amber-400 font-bold">${booking.id}</span> • Total: <span class="font-mono text-emerald-400 font-bold">$${booking.totalPrice}</span></p>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 600);
+            }, 6000);
+        }
+
+        // Universal In-App Toast Notification (Never use window.alert)
+        function showToast(title, message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            const isError = type === 'error';
+            const isWarning = type === 'warning';
+            const borderColor = isError ? 'border-rose-500' : (isWarning ? 'border-amber-500' : 'border-emerald-500');
+            const shadowColor = isError ? 'shadow-rose-500/20' : (isWarning ? 'shadow-amber-500/20' : 'shadow-emerald-500/20');
+            const badgeColor = isError ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : (isWarning ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30');
+            const iconSvg = isError
+                ? `<svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`
+                : `<svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+
+            toast.className = `pointer-events-auto bg-stone-900 border-2 ${borderColor} rounded-2xl p-4 shadow-2xl ${shadowColor} max-w-md w-full flex items-start space-x-3 transition transform duration-400 translate-y-0 opacity-100`;
+            toast.innerHTML = `
+                <div class="w-9 h-9 rounded-xl ${badgeColor} border flex items-center justify-center shrink-0">
+                    ${iconSvg}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-white">${title}</span>
+                        <span class="text-[10px] text-stone-500 font-mono">${new Date().toLocaleTimeString()}</span>
+                    </div>
+                    <p class="text-xs text-stone-300 mt-0.5 leading-relaxed">${message}</p>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 400);
+            }, 4500);
+        }
+
+        // 1. Real-time Firestore onSnapshot for Bookings
+        let isInitialBookingsLoad = true;
+        try {
+            onSnapshot(collection(db, 'bookings'), (snapshot) => {
+                const liveBookings = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    liveBookings.push({
+                        ...data,
+                        id: data.id || doc.id
+                    });
+                });
+
+                // Sort newest first
+                liveBookings.sort((a, b) => {
+                    const timeA = new Date(a.createdAt || 0).getTime();
+                    const timeB = new Date(b.createdAt || 0).getTime();
+                    return timeB - timeA;
+                });
+
+                // Detect new user booking
+                if (!isInitialBookingsLoad && liveBookings.length > stateBookings.length) {
+                    const latest = liveBookings[0];
+                    newlyAddedBookingId = latest.id;
+                    showNewBookingToast(latest);
+                    logAction("FIRESTORE_NEW_BOOKING", `⚡ Real-time from user: ${latest.guestName} booked ${latest.roomName} ($${latest.totalPrice}) [Ref: ${latest.id}]`);
+                    setTimeout(() => {
+                        newlyAddedBookingId = null;
+                        renderBookings();
+                    }, 4000);
+                }
+                isInitialBookingsLoad = false;
+                stateBookings = liveBookings;
+                renderAll();
+                
+                const badge = document.getElementById('connection-status');
+                if (badge) {
+                    badge.innerText = "0ms Firestore onSnapshot Active";
+                    badge.className = "text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-mono uppercase tracking-wider font-semibold";
+                }
+            }, (error) => {
+                console.warn("Firestore bookings listener notice:", error);
+                // Fallback to fetch from backend API
+                fetchAdminDataFallback();
+            });
+        } catch (e) {
+            console.warn("Firestore bookings listener error:", e);
+            fetchAdminDataFallback();
+        }
+
+        // 2. Real-time Firestore onSnapshot for Rooms
+        try {
+            onSnapshot(collection(db, 'rooms'), (snapshot) => {
+                const liveRooms = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    liveRooms.push({
+                        ...data,
+                        id: data.id || doc.id
+                    });
+                });
+
+                stateRooms = liveRooms;
+                renderRooms();
+                renderKPIs();
+                renderAnalytics();
+            }, (error) => {
+                console.warn("Firestore rooms listener notice:", error);
+                fetchRoomsFallback();
+            });
+        } catch (e) {
+            console.warn("Firestore rooms listener error:", e);
+            fetchRoomsFallback();
+        }
+
+        // Fallback fetch handlers
+        async function fetchRoomsFallback() {
+            try {
+                const res = await fetch('/api/rooms?_t=' + Date.now(), { cache: 'no-store' });
+                if (res.ok) {
+                    stateRooms = await res.json();
+                    renderRooms();
+                    renderKPIs();
+                }
+            } catch {}
+        }
+
+        async function fetchAdminDataFallback() {
+            try {
+                const [bRes, rRes] = await Promise.all([
+                    fetch('/api/bookings?_t=' + Date.now(), { cache: 'no-store' }),
+                    fetch('/api/rooms?_t=' + Date.now(), { cache: 'no-store' })
+                ]);
+                if (bRes.ok) stateBookings = await bRes.json();
+                if (rRes.ok) stateRooms = await rRes.json();
+                renderAll();
+            } catch {}
+        }
+
+        // Fallback SSE Listener
+        try {
+            const es = new EventSource('/api/events');
+            es.addEventListener('NEW_BOOKING', () => fetchAdminDataFallback());
+            es.addEventListener('ROOM_CREATED', () => fetchRoomsFallback());
+            es.addEventListener('ROOM_UPDATED', () => fetchRoomsFallback());
+            es.addEventListener('ROOM_DELETED', () => fetchRoomsFallback());
+            es.addEventListener('ROOM_TOGGLED', () => fetchRoomsFallback());
+        } catch {}
+
+        // Cross-tab storage listener
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'aurelia_bookings_sync_trigger' || e.key === 'aurelia_last_live_booking') {
+                logAction("STORAGE_SYNC", `Direct storage trigger detected from user booking.`);
+                fetchAdminDataFallback();
+            }
+        });
+
+        // Filter states
+        let currentStatusFilter = 'all';
+        let currentRoomTypeFilter = 'all';
+
+        // Helper: get 2-letter initials
+        function getInitials(name) {
+            if (!name) return 'GU';
+            const parts = name.trim().split(/\s+/);
+            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
+        // UI Render Functions
+        function renderAll() {
+            renderKPIs();
+            renderBookings();
+            renderRooms();
+            renderDashboardRecent();
+            renderAnalytics();
+            renderLogs();
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderKPIs() {
+            const confirmedBookings = stateBookings.filter(b => b.status !== 'Cancelled');
+            const totalRev = confirmedBookings.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0);
+            
+            document.getElementById('stat-revenue').innerText = '$' + totalRev.toLocaleString();
+            document.getElementById('stat-bookings').innerText = stateBookings.length;
+            document.getElementById('badge-bookings-count').innerText = stateBookings.length;
+            document.getElementById('badge-rooms-count').innerText = stateRooms.length;
+            
+            const mobileBookingsBadge = document.getElementById('mobile-badge-bookings-count');
+            if (mobileBookingsBadge) mobileBookingsBadge.innerText = stateBookings.length;
+            const mobileRoomsBadge = document.getElementById('mobile-badge-rooms-count');
+            if (mobileRoomsBadge) mobileRoomsBadge.innerText = stateRooms.length;
+
+            document.getElementById('stat-rooms').innerText = stateRooms.length + ' Suites';
+            
+            const activeRoomsCount = stateRooms.filter(r => r.available).length;
+            document.getElementById('stat-avail-text').innerText = `${activeRoomsCount} of ${stateRooms.length} available`;
+
+            const totalRoomsCount = Math.max(stateRooms.length, 1);
+            const activeGuests = stateBookings.filter(b => b.status === 'Checked-in' || b.status === 'Confirmed').length;
+            const occupancy = Math.min(100, Math.round((activeGuests / totalRoomsCount) * 100));
+            document.getElementById('stat-occupancy').innerText = occupancy + '%';
+
+            const adr = confirmedBookings.length > 0 ? Math.round(totalRev / confirmedBookings.length) : 0;
+            document.getElementById('stat-adr').innerText = '$' + adr;
+            document.getElementById('stat-revpar').innerText = '$' + Math.round(adr * (occupancy / 100));
+
+            // Update interactive status pill counters
+            const allCount = stateBookings.length;
+            const confirmedCount = stateBookings.filter(b => b.status === 'Confirmed').length;
+            const checkedinCount = stateBookings.filter(b => b.status === 'Checked-in').length;
+            const completedCount = stateBookings.filter(b => b.status === 'Completed').length;
+            const cancelledCount = stateBookings.filter(b => b.status === 'Cancelled').length;
+
+            if (document.getElementById('count-all')) document.getElementById('count-all').innerText = allCount;
+            if (document.getElementById('count-confirmed')) document.getElementById('count-confirmed').innerText = confirmedCount;
+            if (document.getElementById('count-checkedin')) document.getElementById('count-checkedin').innerText = checkedinCount;
+            if (document.getElementById('count-completed')) document.getElementById('count-completed').innerText = completedCount;
+            if (document.getElementById('count-cancelled')) document.getElementById('count-cancelled').innerText = cancelledCount;
+        }
+
+        function renderDashboardRecent() {
+            const container = document.getElementById('dashboard-recent-bookings');
+            if (!container) return;
+            if (stateBookings.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center text-stone-500 border border-dashed border-stone-800 rounded-xl">
+                        <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+                        <p class="text-xs">No reservations received yet. Book any suite from the user website to test automatic stream.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const recentFour = stateBookings.slice(0, 4);
+            container.innerHTML = recentFour.map(b => {
+                let badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+                if (b.status === 'Checked-in') badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+                else if (b.status === 'Completed') badgeColor = 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+                else if (b.status === 'Cancelled') badgeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+
+                const initials = getInitials(b.guestName);
+
+                return `
+                    <div class="p-3 rounded-xl bg-stone-950/90 border border-stone-800/90 flex items-center justify-between hover:border-amber-500/30 transition group">
+                        <div class="flex items-center space-x-3 min-w-0 pr-2">
+                            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-700/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-xs shrink-0">
+                                ${initials}
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5">
+                                    <h4 class="text-xs font-bold text-white truncate">${b.guestName || 'Guest'}</h4>
+                                    <span class="text-[10px] text-stone-500 font-mono">(${b.id})</span>
+                                </div>
+                                <p class="text-[11px] text-stone-400 truncate">${b.roomName || 'Luxury Suite'} • <span class="font-mono text-emerald-400 font-bold">$${b.totalPrice}</span></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 shrink-0">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badgeColor}">${b.status || 'Confirmed'}</span>
+                            <button onclick="window.adminApp.viewBooking('${b.id}')" class="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold cursor-pointer active:scale-95 transition">View</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderBookings() {
+            const tbody = document.getElementById('bookings-table-body');
+            const mobileContainer = document.getElementById('bookings-cards-mobile');
+            const emptyEl = document.getElementById('bookings-empty');
+            const clearBtn = document.getElementById('btn-clear-search');
+            if (!tbody || !emptyEl) return;
+            
+            const query = (document.getElementById('search-bookings')?.value || '').trim().toLowerCase();
+            if (clearBtn) {
+                if (query.length > 0) clearBtn.classList.remove('hidden');
+                else clearBtn.classList.add('hidden');
+            }
+
+            const filtered = stateBookings.filter(b => {
+                const matchesQuery = (b.guestName || '').toLowerCase().includes(query) ||
+                                     (b.id || '').toLowerCase().includes(query) ||
+                                     (b.email || '').toLowerCase().includes(query) ||
+                                     (b.phone || '').toLowerCase().includes(query) ||
+                                     (b.roomName || '').toLowerCase().includes(query);
+                const matchesStatus = currentStatusFilter === 'all' || b.status === currentStatusFilter;
+                return matchesQuery && matchesStatus;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                if (mobileContainer) mobileContainer.innerHTML = '';
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+            emptyEl.classList.add('hidden');
+
+            // 1. Render Desktop Table Rows
+            tbody.innerHTML = filtered.map(b => {
+                let statusBadge = '';
+                if (b.status === 'Confirmed') statusBadge = 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+                else if (b.status === 'Checked-in') statusBadge = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+                else if (b.status === 'Completed') statusBadge = 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+                else statusBadge = 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+
+                const isNew = b.id === newlyAddedBookingId;
+                const highlightClass = isNew ? 'row-newly-added ring-2 ring-emerald-500/80 bg-emerald-950/40' : '';
+                const initials = getInitials(b.guestName);
+
+                return `
+                    <tr class="hover:bg-stone-850/50 transition duration-150 ${highlightClass}">
+                        <td class="p-4 font-mono font-bold text-amber-400 text-xs">
+                            <div class="flex items-center gap-1.5">
+                                ${isNew ? '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>' : ''}
+                                <span>${b.id}</span>
+                                <button onclick="window.adminApp.copyRefId('${b.id}')" title="Copy Reference ID" class="p-1 rounded hover:bg-stone-800 text-stone-400 hover:text-amber-400 transition cursor-pointer">
+                                    <i data-lucide="copy" class="w-3.5 h-3.5 inline"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="p-4">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/25 text-amber-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                    ${initials}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="font-bold text-white flex items-center gap-2">
+                                        <span class="truncate">${b.guestName || 'Guest'}</span>
+                                        ${isNew ? '<span class="text-[9px] bg-emerald-500 text-stone-950 font-bold px-1.5 py-0.2 rounded uppercase">NEW</span>' : ''}
+                                    </div>
+                                    <div class="text-xs text-stone-400 truncate">${b.email || ''} ${b.phone ? '• ' + b.phone : ''}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4">
+                            <div class="flex items-center gap-2.5">
+                                ${b.roomImage ? `<img src="${b.roomImage}" alt="${b.roomName}" class="w-10 h-10 object-cover rounded-lg border border-stone-800 shrink-0">` : ''}
+                                <div class="min-w-0">
+                                    <div class="font-medium text-stone-200 truncate">${b.roomName || 'Luxury Suite'}</div>
+                                    <div class="text-[10px] text-amber-500/90 font-medium">${b.roomType || 'Suite'} • ${b.guests || 2} Guests</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4 text-xs text-stone-300">
+                            <div>${b.checkIn} → ${b.checkOut}</div>
+                            <div class="text-[10px] text-stone-500 font-medium">${b.nights || 1} ${(b.nights || 1) === 1 ? 'Night' : 'Nights'} • ${b.arrivalTime || '3:00 PM'}</div>
+                        </td>
+                        <td class="p-4 font-mono font-bold text-emerald-400 text-sm">$${b.totalPrice}</td>
+                        <td class="p-4 text-xs text-stone-400">${b.paymentMethod || 'Pay at Hotel'}</td>
+                        <td class="p-4">
+                            <button onclick="window.adminApp.cycleStatus('${b.id}')" title="Click to cycle status" class="px-2.5 py-1 rounded-full text-xs font-semibold border ${statusBadge} hover:scale-105 active:scale-95 transition cursor-pointer">
+                                ${b.status || 'Confirmed'} ⟳
+                            </button>
+                        </td>
+                        <td class="p-4 text-right space-x-1.5 whitespace-nowrap">
+                            <button onclick="window.adminApp.viewBooking('${b.id}')" class="px-2.5 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs transition active:scale-95 cursor-pointer" title="View details">
+                                <i data-lucide="eye" class="w-3.5 h-3.5 inline"></i>
+                            </button>
+                            <button onclick="window.adminApp.confirmBooking('${b.id}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs transition active:scale-95 cursor-pointer" title="Confirm Reservation">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5 inline"></i>
+                            </button>
+                            <button onclick="window.adminApp.deleteBooking('${b.id}')" class="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs transition active:scale-95 cursor-pointer" title="Delete reservation">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // 2. Render Mobile Responsive Cards
+            if (mobileContainer) {
+                mobileContainer.innerHTML = filtered.map(b => {
+                    let statusBadge = '';
+                    if (b.status === 'Confirmed') statusBadge = 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+                    else if (b.status === 'Checked-in') statusBadge = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+                    else if (b.status === 'Completed') statusBadge = 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+                    else statusBadge = 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+
+                    const isNew = b.id === newlyAddedBookingId;
+                    const highlightClass = isNew ? 'ring-2 ring-emerald-500/80 bg-emerald-950/40' : 'bg-stone-900/90';
+                    const initials = getInitials(b.guestName);
+
+                    return `
+                        <div class="${highlightClass} border border-stone-800/90 rounded-2xl p-4 space-y-3 shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-1.5 font-mono font-bold text-amber-400 text-xs">
+                                    ${isNew ? '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>' : ''}
+                                    <span>${b.id}</span>
+                                    <button onclick="window.adminApp.copyRefId('${b.id}')" class="p-1 rounded bg-stone-950 text-stone-400 hover:text-amber-400 transition" title="Copy Reference ID">
+                                        <i data-lucide="copy" class="w-3 h-3"></i>
+                                    </button>
+                                    ${isNew ? '<span class="text-[9px] bg-emerald-500 text-stone-950 font-bold px-1.5 py-0.2 rounded uppercase">NEW</span>' : ''}
+                                </div>
+                                <button onclick="window.adminApp.cycleStatus('${b.id}')" class="min-h-[34px] px-3 py-1 rounded-full text-xs font-semibold border ${statusBadge} active:scale-95 transition flex items-center gap-1 cursor-pointer">
+                                    <span>${b.status || 'Confirmed'}</span>
+                                    <i data-lucide="refresh-cw" class="w-3 h-3 opacity-70"></i>
+                                </button>
+                            </div>
+
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/25 text-amber-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                    ${initials}
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="font-bold text-white text-sm truncate">${b.guestName || 'Guest'}</h4>
+                                    <div class="text-xs text-stone-400 truncate">${b.email || ''} ${b.phone ? '• ' + b.phone : ''}</div>
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-stone-950/90 rounded-xl border border-stone-800/90 flex items-center justify-between text-xs gap-3">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    ${b.roomImage ? `<img src="${b.roomImage}" alt="${b.roomName}" class="w-12 h-12 object-cover rounded-lg border border-stone-800 shrink-0">` : ''}
+                                    <div class="min-w-0">
+                                        <div class="font-semibold text-stone-200 truncate">${b.roomName || 'Luxury Suite'}</div>
+                                        <div class="text-[11px] text-stone-400 mt-0.5 truncate">${b.checkIn} → ${b.checkOut} <span class="text-amber-500 font-bold">(${b.nights || 1}n)</span></div>
+                                    </div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <div class="font-mono font-bold text-emerald-400 text-base">$${b.totalPrice}</div>
+                                    <div class="text-[10px] text-stone-500 truncate">${b.paymentMethod || 'Pay at Hotel'}</div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 pt-1">
+                                <button onclick="window.adminApp.viewBooking('${b.id}')" class="flex-1 min-h-[44px] py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold transition flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer">
+                                    <i data-lucide="eye" class="w-4 h-4"></i> View Details
+                                </button>
+                                <button onclick="window.adminApp.confirmBooking('${b.id}')" class="min-h-[44px] px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition flex items-center justify-center gap-1 active:scale-95 cursor-pointer" title="Confirm Reservation">
+                                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="window.adminApp.deleteBooking('${b.id}')" class="min-h-[44px] px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold transition flex items-center justify-center gap-1 active:scale-95 cursor-pointer" title="Delete reservation">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderRooms() {
+            const grid = document.getElementById('rooms-grid');
+            if (!grid) return;
+            if (stateRooms.length === 0) {
+                grid.innerHTML = '<div class="col-span-3 text-center p-8 text-stone-500">Loading suites from Firestore...</div>';
+                return;
+            }
+
+            const query = (document.getElementById('search-rooms')?.value || '').trim().toLowerCase();
+
+            const filteredRooms = stateRooms.filter(r => {
+                const matchesQuery = !query || 
+                    (r.name || '').toLowerCase().includes(query) ||
+                    (r.type || '').toLowerCase().includes(query) ||
+                    (r.view || '').toLowerCase().includes(query) ||
+                    (r.bedType || '').toLowerCase().includes(query) ||
+                    (r.amenities || []).some(a => a.toLowerCase().includes(query));
+                
+                const matchesType = currentRoomTypeFilter === 'all' || (r.type || '').toLowerCase() === currentRoomTypeFilter.toLowerCase();
+                return matchesQuery && matchesType;
+            });
+
+            if (filteredRooms.length === 0) {
+                grid.innerHTML = '<div class="col-span-3 text-center p-8 text-stone-500 bg-stone-900/40 rounded-2xl border border-stone-800">No suites match your search or category filter.</div>';
+                return;
+            }
+
+            grid.innerHTML = filteredRooms.map(r => `
+                <div class="bg-stone-900/80 border ${r.available ? 'border-stone-800 hover:border-amber-500/35' : 'border-rose-900/50 opacity-80'} rounded-2xl overflow-hidden shadow-xl flex flex-col transition group">
+                    <div class="h-48 relative overflow-hidden bg-stone-950">
+                        <img src="${r.image}" alt="${r.name}" class="w-full h-full object-cover transform group-hover:scale-105 transition duration-500" onerror="this.src='https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80'">
+                        <div class="absolute top-3 right-3 bg-stone-950/85 backdrop-blur-md px-3 py-1 rounded-full text-xs font-mono font-bold text-amber-400 border border-amber-500/30 shadow-lg">
+                            $${r.price} / night
+                        </div>
+                        <div class="absolute top-3 left-3">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold font-mono shadow-md ${r.available ? 'bg-emerald-500/90 text-stone-950' : 'bg-rose-600 text-white'}">
+                                ${r.available ? '● Live on Website' : '○ Unavailable'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
+                        <div>
+                            <div class="text-xs uppercase tracking-wider text-amber-400 font-semibold mb-1 flex items-center justify-between">
+                                <span class="bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md text-[10px]">${r.type || 'Suite'}</span>
+                                <span class="text-stone-400 text-[11px]">Max ${r.capacity || 2} Guests</span>
+                            </div>
+                            <h4 class="text-base sm:text-lg font-serif font-bold text-white mt-1 group-hover:text-amber-400 transition">${r.name}</h4>
+                            
+                            <div class="grid grid-cols-2 gap-2 text-[11px] text-stone-300 py-1.5 px-2 bg-stone-950/80 rounded-xl border border-stone-800/80 mt-2.5">
+                                <div><span class="text-amber-400/90 font-semibold">Bed:</span> ${r.bedType || '1 King Bed'}</div>
+                                <div><span class="text-amber-400/90 font-semibold">Size:</span> ${r.roomSize || '480 sq.ft.'}</div>
+                                <div class="col-span-2 truncate"><span class="text-amber-400/90 font-semibold">View:</span> ${r.view || 'Scenic View'}</div>
+                            </div>
+
+                            <p class="text-xs text-stone-400 mt-2 line-clamp-2 leading-relaxed">${r.description || 'Luxurious amenities and ocean views.'}</p>
+                            <div class="flex flex-wrap gap-1.5 mt-2.5">
+                                ${(r.amenities || []).slice(0, 4).map(a => `
+                                    <span class="px-2 py-0.5 rounded-md bg-stone-950 border border-stone-800 text-[10px] text-stone-300">${a}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-3 border-t border-stone-800 text-xs gap-2">
+                            <button onclick="window.adminApp.toggleRoomAvailability('${r.id}')" class="min-h-[36px] px-3 py-1.5 rounded-xl ${r.available ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'} font-medium transition cursor-pointer active:scale-95 text-center truncate">
+                                ${r.available ? 'Set Unavailable' : 'Make Available'}
+                            </button>
+                            <div class="flex items-center space-x-1.5 shrink-0">
+                                <a href="/?room=${r.id}" target="_blank" class="min-h-[36px] px-2.5 py-1.5 rounded-xl bg-stone-800/80 hover:bg-stone-700 text-stone-300 font-semibold transition active:scale-95 flex items-center justify-center cursor-pointer" title="Preview on Website">
+                                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                </a>
+                                <button onclick="window.adminApp.openEditRoomModal('${r.id}')" class="min-h-[36px] px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold transition cursor-pointer active:scale-95 flex items-center gap-1" title="Edit Suite Details">
+                                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                    <span>Edit</span>
+                                </button>
+                                <button onclick="window.adminApp.deleteRoom('${r.id}')" class="min-h-[36px] px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition cursor-pointer active:scale-95 flex items-center justify-center" title="Delete Suite">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderAnalytics() {
+            const breakdown = document.getElementById('revenue-breakdown');
+            if (!breakdown) return;
+            const typeTotals = {};
+            stateBookings.filter(b => b.status !== 'Cancelled').forEach(b => {
+                const room = stateRooms.find(r => r.id === b.roomId) || { type: 'Deluxe' };
+                const t = room.type || 'Deluxe';
+                typeTotals[t] = (typeTotals[t] || 0) + (Number(b.totalPrice) || 0);
+            });
+
+            const totalRev = Object.values(typeTotals).reduce((a, b) => a + b, 0);
+
+            if (totalRev === 0) {
+                breakdown.innerHTML = '<p class="text-xs text-stone-500 italic py-4">No revenue data yet. Once reservations arrive from user website, breakdown will calculate here.</p>';
+                return;
+            }
+
+            breakdown.innerHTML = Object.entries(typeTotals).map(([type, rev]) => {
+                const pct = Math.round((rev / totalRev) * 100);
+                return `
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-stone-300 font-medium">${type} Suites</span>
+                            <span class="font-mono text-amber-400">$${rev.toLocaleString()} (${pct}%)</span>
+                        </div>
+                        <div class="w-full bg-stone-950 rounded-full h-2 overflow-hidden border border-stone-800">
+                            <div class="bg-amber-500 h-full rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('audit-logs-container');
+            if (!container) return;
+            container.innerHTML = activityLogs.map(l => `
+                <div class="flex items-start space-x-3 py-1.5 border-b border-stone-800/40">
+                    <span class="text-stone-500 shrink-0">[${l.time}]</span>
+                    <span class="text-amber-400 font-bold shrink-0">${l.action}:</span>
+                    <span class="text-stone-300">${l.details}</span>
+                </div>
+            `).join('');
+        }
+
+        // Global methods exposed to window.adminApp
+        window.adminApp = {
+            manualSync: () => {
+                fetchAdminDataFallback();
+                fetchRoomsFallback();
+            },
+
+            switchTab: (tabId) => {
+                ['dashboard', 'bookings', 'rooms', 'analytics', 'logs'].forEach(t => {
+                    const el = document.getElementById(`tab-content-${t}`);
+                    const headerBtn = document.getElementById(`nav-tab-${t}`);
+                    const mobileBtn = document.getElementById(`mobile-nav-${t}`);
+                    if (el) {
+                        el.classList.add('hidden');
+                        el.classList.remove('animate-fade-in');
+                    }
+                    if (headerBtn) headerBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide border border-transparent text-stone-400 hover:text-stone-200 hover:bg-stone-900 flex items-center gap-1.5 cursor-pointer transition active:scale-95";
+                    if (mobileBtn) mobileBtn.className = "flex flex-col items-center justify-center py-1.5 px-3 rounded-xl text-stone-400 hover:text-stone-200 text-[10px] font-semibold transition relative active:scale-95 cursor-pointer";
+                });
+                const target = document.getElementById(`tab-content-${tabId}`);
+                const targetHeaderBtn = document.getElementById(`nav-tab-${tabId}`);
+                const targetMobileBtn = document.getElementById(`mobile-nav-${tabId}`);
+                if (target) {
+                    target.classList.remove('hidden');
+                    target.classList.add('animate-fade-in');
+                }
+                if (targetHeaderBtn) targetHeaderBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide border border-amber-500/40 bg-amber-500/10 text-amber-400 flex items-center gap-1.5 cursor-pointer transition active:scale-95 shadow-sm";
+                if (targetMobileBtn) targetMobileBtn.className = "flex flex-col items-center justify-center py-1.5 px-3 rounded-xl text-amber-400 text-[10px] font-semibold transition relative active:scale-95 cursor-pointer";
+                if (window.lucide) lucide.createIcons();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+
+            setStatusFilter: (status) => {
+                currentStatusFilter = status;
+                ['all', 'Confirmed', 'Checked-in', 'Completed', 'Cancelled'].forEach(s => {
+                    const pill = document.getElementById(`status-pill-${s}`);
+                    if (pill) {
+                        if (s === status) {
+                            pill.className = "px-3 py-1.5 rounded-xl text-xs font-semibold border border-amber-500/50 bg-amber-500/15 text-amber-400 whitespace-nowrap transition active:scale-95 flex items-center gap-1.5";
+                        } else {
+                            pill.className = "px-3 py-1.5 rounded-xl text-xs font-semibold border border-stone-800 bg-stone-950 text-stone-400 hover:text-stone-200 whitespace-nowrap transition active:scale-95 flex items-center gap-1.5";
+                        }
+                    }
+                });
+                const selectEl = document.getElementById('filter-status');
+                if (selectEl) selectEl.value = status;
+                renderBookings();
+            },
+
+            onStatusSelectChange: (status) => {
+                window.adminApp.setStatusFilter(status);
+            },
+
+            setRoomTypeFilter: (type) => {
+                currentRoomTypeFilter = type;
+                ['all', 'Single', 'Double', 'Twin', 'Suite'].forEach(t => {
+                    const pill = document.getElementById(`room-type-${t}`);
+                    if (pill) {
+                        if (t.toLowerCase() === type.toLowerCase()) {
+                            pill.className = "px-3 py-1.5 rounded-xl text-xs font-semibold border border-amber-500/40 bg-amber-500/10 text-amber-400 whitespace-nowrap active:scale-95 transition";
+                        } else {
+                            pill.className = "px-3 py-1.5 rounded-xl text-xs font-semibold border border-stone-800 bg-stone-950 text-stone-400 hover:text-stone-200 whitespace-nowrap active:scale-95 transition";
+                        }
+                    }
+                });
+                renderRooms();
+            },
+
+            filterRooms: () => {
+                renderRooms();
+            },
+
+            copyRefId: (refId) => {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(refId).then(() => {
+                        showToast("Reference Copied", `Copied reference ${refId} to clipboard.`, "success");
+                    }).catch(() => {
+                        showToast("Reference ID", refId, "info");
+                    });
+                } else {
+                    showToast("Reference ID", refId, "info");
+                }
+            },
+
+            exportBookingsCSV: () => {
+                if (stateBookings.length === 0) {
+                    showToast("No Reservations", "There are no bookings to export.", "warning");
+                    return;
+                }
+                const headers = ["Reference ID", "Guest Name", "Email", "Phone", "Suite Name", "Suite Type", "Check-in", "Check-out", "Nights", "Guests", "Total USD", "Payment Method", "Status", "Arrival Time", "Special Requests"];
+                const rows = stateBookings.map(b => [
+                    b.id,
+                    `"${(b.guestName || '').replace(/"/g, '""')}"`,
+                    `"${(b.email || '').replace(/"/g, '""')}"`,
+                    `"${(b.phone || '').replace(/"/g, '""')}"`,
+                    `"${(b.roomName || '').replace(/"/g, '""')}"`,
+                    `"${(b.roomType || '').replace(/"/g, '""')}"`,
+                    b.checkIn,
+                    b.checkOut,
+                    b.nights || 1,
+                    b.guests || 2,
+                    b.totalPrice,
+                    `"${(b.paymentMethod || '').replace(/"/g, '""')}"`,
+                    b.status || 'Confirmed',
+                    `"${(b.arrivalTime || '').replace(/"/g, '""')}"`,
+                    `"${(b.specialRequests || '').replace(/"/g, '""')}"`
+                ]);
+
+                const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `aurelia_reservations_${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("CSV Downloaded", "Reservations exported to CSV file successfully.", "success");
+            },
+
+            printGuestRoster: () => {
+                window.print();
+            },
+
+            filterBookings: () => {
+                renderBookings();
+            },
+
+            viewBooking: (id) => {
+                const b = stateBookings.find(x => x.id === id);
+                if (!b) return;
+                const modalBody = document.getElementById('booking-modal-body');
+                const nightsCount = b.nights || 1;
+                modalBody.innerHTML = `
+                    <div class="space-y-3 text-xs">
+                        <!-- Suite Card Header -->
+                        <div class="flex items-center gap-3 p-3 rounded-xl bg-stone-950 border border-stone-800">
+                            ${b.roomImage ? `<img src="${b.roomImage}" alt="${b.roomName}" class="w-16 h-14 object-cover rounded-lg border border-stone-700 shrink-0">` : ''}
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-serif font-bold text-white text-sm truncate">${b.roomName || 'Luxury Suite'}</span>
+                                    ${b.roomType ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30">${b.roomType}</span>` : ''}
+                                </div>
+                                <div class="text-[11px] text-stone-400 mt-0.5">Reference ID: <span class="font-mono text-amber-400 font-bold">${b.id}</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Details Grid -->
+                        <div class="p-3.5 rounded-xl bg-stone-950 border border-stone-800 space-y-2">
+                            <div class="flex justify-between border-b border-stone-800/80 pb-1.5"><span class="text-stone-400">Guest Name:</span><span class="font-bold text-white">${b.guestName || 'Guest'}</span></div>
+                            <div class="flex justify-between border-b border-stone-800/80 pb-1.5"><span class="text-stone-400">Email Address:</span><span class="text-stone-200">${b.email}</span></div>
+                            <div class="flex justify-between border-b border-stone-800/80 pb-1.5"><span class="text-stone-400">Phone:</span><span class="text-stone-200">${b.phone || 'N/A'}</span></div>
+                            <div class="flex justify-between border-b border-stone-800/80 pb-1.5"><span class="text-stone-400">Stay Schedule:</span><span class="text-stone-200 font-medium">${b.checkIn} → ${b.checkOut} <span class="text-amber-400 font-bold">(${nightsCount} ${nightsCount === 1 ? 'night' : 'nights'})</span></span></div>
+                            <div class="flex justify-between border-b border-stone-800/80 pb-1.5"><span class="text-stone-400">Expected Arrival:</span><span class="text-stone-200">${b.arrivalTime || '3:00 PM (Standard Check-in)'}</span></div>
+                            <div class="flex justify-between border-b border-stone-800/80 pb-1.5"><span class="text-stone-400">Guests & Bedding:</span><span class="text-stone-200">${b.guests || 2} Guests • ${b.bedPreference || '1 King Size Plush Bed'}</span></div>
+                            <div class="flex justify-between border-b border-stone-800/80 pb-1.5"><span class="text-stone-400">Total Price:</span><span class="font-mono font-bold text-emerald-400 text-sm">$${b.totalPrice}</span></div>
+                            <div class="flex justify-between border-b border-stone-800/80 pb-1.5"><span class="text-stone-400">Payment Term:</span><span class="text-amber-400 font-semibold">${b.paymentMethod || 'Pay at Hotel'}</span></div>
+                            <div class="flex justify-between border-b border-stone-800/80 pb-1.5"><span class="text-stone-400">Status:</span><span class="font-semibold text-white px-2 py-0.5 rounded bg-stone-800">${b.status}</span></div>
+                            <div>
+                                <span class="text-stone-400 block mb-1">Special Requests & Perks:</span>
+                                <div class="p-2.5 rounded-lg bg-stone-900 border border-stone-800/80 text-stone-300 italic text-[11px] leading-relaxed">
+                                    ${b.specialRequests || 'No special requests submitted.'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const actionsContainer = document.getElementById('booking-modal-actions');
+                actionsContainer.innerHTML = `
+                    <button onclick="window.adminApp.confirmBooking('${b.id}'); window.adminApp.closeBookingModal();" class="px-3 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-semibold hover:bg-emerald-500/30 cursor-pointer">Confirm</button>
+                    <button onclick="window.adminApp.setBookingStatus('${b.id}', 'Checked-in'); window.adminApp.closeBookingModal();" class="px-3 py-2 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/40 text-xs font-semibold hover:bg-blue-500/30 cursor-pointer">Check In</button>
+                    <button onclick="window.adminApp.setBookingStatus('${b.id}', 'Cancelled'); window.adminApp.closeBookingModal();" class="px-3 py-2 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/40 text-xs font-semibold hover:bg-rose-500/30 cursor-pointer">Cancel</button>
+                `;
+
+                document.getElementById('booking-modal').classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+            },
+
+            closeBookingModal: () => {
+                document.getElementById('booking-modal').classList.add('hidden');
+            },
+
+            setBookingStatus: async (id, newStatus) => {
+                const b = stateBookings.find(x => x.id === id);
+                if (!b) return;
+                b.status = newStatus;
+
+                // 1. Direct Firestore write
+                try {
+                    await updateDoc(doc(db, 'bookings', id), { status: newStatus });
+                } catch (fsErr) {
+                    console.warn("Firestore status update notice:", fsErr);
+                }
+
+                // 2. REST API update
+                try {
+                    await fetch(`/api/bookings/${id}/status`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+                } catch {}
+
+                logAction("UPDATE_STATUS", `Reservation ${id} (${b.guestName}) set to ${newStatus}`);
+                notifySync();
+                renderAll();
+            },
+
+            confirmBooking: async (id) => {
+                await window.adminApp.setBookingStatus(id, 'Confirmed');
+            },
+
+            cycleStatus: async (id) => {
+                const b = stateBookings.find(x => x.id === id);
+                if (!b) return;
+                const statuses = ['Confirmed', 'Checked-in', 'Completed', 'Cancelled'];
+                const nextIdx = (statuses.indexOf(b.status) + 1) % statuses.length;
+                await window.adminApp.setBookingStatus(id, statuses[nextIdx]);
+            },
+
+            deleteBooking: (id) => {
+                const b = stateBookings.find(x => x.id === id);
+                window.adminApp.openConfirmModal({
+                    title: "Delete Reservation",
+                    subtitle: `Reference: ${id}`,
+                    message: `Are you sure you want to permanently delete the reservation for ${b?.guestName || 'Guest'} (${b?.roomName || 'Suite'})?`,
+                    confirmText: "Delete Reservation",
+                    onConfirm: async () => {
+                        stateBookings = stateBookings.filter(x => x.id !== id);
+
+                        // 1. Direct Firestore delete
+                        try {
+                            await deleteDoc(doc(db, 'bookings', id));
+                        } catch (fsErr) {
+                            console.warn("Firestore delete notice:", fsErr);
+                        }
+
+                        // 2. Server API delete
+                        try {
+                            await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
+                        } catch {}
+
+                        logAction("DELETE_BOOKING", `Deleted reservation reference ${id}`);
+                        notifySync();
+                        renderAll();
+                        showToast("Reservation Removed", `Reservation ${id} has been deleted.`, "warning");
+                    }
+                });
+            },
+
+            handleImageFileChange: (input) => {
+                if (input.files && input.files[0]) {
+                    const file = input.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const preview = document.getElementById('room-form-preview');
+                        const label = document.getElementById('room-form-preview-label');
+                        if (preview) preview.src = e.target.result;
+                        if (label) label.innerText = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            },
+
+            pickPresetImage: (url, labelName) => {
+                document.getElementById('room-form-existing-image').value = url;
+                document.getElementById('room-form-image-file').value = '';
+                const preview = document.getElementById('room-form-preview');
+                const label = document.getElementById('room-form-preview-label');
+                if (preview) preview.src = url;
+                if (label) label.innerText = `${labelName} (Preset)`;
+                showToast("Preset Photo Selected", `Selected ${labelName} for suite cover.`, "success");
+            },
+
+            openConfirmModal: ({ title, subtitle, message, confirmText, onConfirm }) => {
+                document.getElementById('confirm-modal-title').innerText = title || "Confirm Action";
+                document.getElementById('confirm-modal-subtitle').innerText = subtitle || "Permanent Change";
+                document.getElementById('confirm-modal-message').innerText = message || "Are you sure you want to proceed?";
+                const btn = document.getElementById('confirm-modal-btn');
+                btn.innerHTML = `<span>${confirmText || "Confirm"}</span>`;
+                btn.onclick = async () => {
+                    window.adminApp.closeConfirmModal();
+                    if (typeof onConfirm === 'function') {
+                        await onConfirm();
+                    }
+                };
+                document.getElementById('confirm-modal').classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+            },
+
+            closeConfirmModal: () => {
+                document.getElementById('confirm-modal').classList.add('hidden');
+            },
+
+            openAddRoomModal: () => {
+                document.getElementById('room-form-id').value = '';
+                document.getElementById('room-modal-title').innerHTML = '<i data-lucide="plus-circle" class="w-5 h-5 text-amber-400"></i><span>Add New Suite</span>';
+                document.getElementById('room-form-name').value = '';
+                document.getElementById('room-form-type').value = 'Deluxe';
+                document.getElementById('room-form-price').value = '350';
+                document.getElementById('room-form-capacity').value = '2';
+                document.getElementById('room-form-available').value = 'true';
+                document.getElementById('room-form-image-file').value = '';
+                const defaultImg = 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80';
+                document.getElementById('room-form-existing-image').value = defaultImg;
+                const preview = document.getElementById('room-form-preview');
+                const previewLabel = document.getElementById('room-form-preview-label');
+                if (preview) preview.src = defaultImg;
+                if (previewLabel) previewLabel.innerText = "Oceanfront Executive (Default)";
+                
+                // Essential hotel specs defaults
+                document.getElementById('room-form-size').value = '520 sq.ft. (48 m²)';
+                document.getElementById('room-form-bed').value = '1 King Size Plush Bed';
+                document.getElementById('room-form-view').value = 'Oceanfront Panoramic Horizon';
+                document.getElementById('room-form-bathroom').value = 'Italian Marble Bath with Rainfall Shower';
+                document.getElementById('room-form-floor').value = 'Floors 10 - 20';
+                document.getElementById('room-form-smoking').value = '100% Non-Smoking Room';
+                document.getElementById('room-form-cancellation').value = 'Free cancellation up to 24h prior to check-in';
+
+                document.getElementById('room-form-desc').value = 'Luxuriously appointed suite with sweeping ocean views, marble bathroom, and plush bedding.';
+                document.getElementById('room-form-amenities').value = 'Ocean View, King Bed, Free WiFi, Air Conditioning, Balcony';
+                
+                const saveBtn = document.getElementById('btn-save-room');
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<span>Save & Publish to Website</span>';
+                }
+
+                document.getElementById('room-modal').classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+            },
+
+            openEditRoomModal: (id) => {
+                const r = stateRooms.find(x => x.id === id);
+                if (!r) return;
+                document.getElementById('room-form-id').value = r.id;
+                document.getElementById('room-modal-title').innerHTML = '<i data-lucide="edit-3" class="w-5 h-5 text-amber-400"></i><span>Edit Suite: ' + r.name + '</span>';
+                document.getElementById('room-form-name').value = r.name;
+                document.getElementById('room-form-type').value = r.type || 'Deluxe';
+                document.getElementById('room-form-price').value = r.price;
+                document.getElementById('room-form-capacity').value = r.capacity;
+                document.getElementById('room-form-available').value = r.available ? 'true' : 'false';
+                document.getElementById('room-form-image-file').value = '';
+                document.getElementById('room-form-existing-image').value = r.image;
+                const preview = document.getElementById('room-form-preview');
+                const previewLabel = document.getElementById('room-form-preview-label');
+                if (preview) preview.src = r.image;
+                if (previewLabel) previewLabel.innerText = "Current suite photo";
+
+                // Essential hotel specs
+                document.getElementById('room-form-size').value = r.roomSize || '480 sq.ft. (45 m²)';
+                document.getElementById('room-form-bed').value = r.bedType || '1 King Size Bed';
+                document.getElementById('room-form-view').value = r.view || 'Scenic Horizon View';
+                document.getElementById('room-form-bathroom').value = r.bathroom || 'Marble Bath with Rainfall Shower';
+                document.getElementById('room-form-floor').value = r.floor || 'High Floor';
+                document.getElementById('room-form-smoking').value = r.smokingPolicy || '100% Non-Smoking Room';
+                document.getElementById('room-form-cancellation').value = r.cancellationPolicy || 'Free cancellation up to 24h prior to check-in';
+
+                document.getElementById('room-form-desc').value = r.description;
+                document.getElementById('room-form-amenities').value = (r.amenities || []).join(', ');
+                
+                const saveBtn = document.getElementById('btn-save-room');
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<span>Save & Publish to Website</span>';
+                }
+
+                document.getElementById('room-modal').classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+            },
+
+            closeRoomModal: () => {
+                document.getElementById('room-modal').classList.add('hidden');
+            },
+
+            handleRoomFormSubmit: async (e) => {
+                e.preventDefault();
+                const saveBtn = document.getElementById('btn-save-room');
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Publishing to Website...';
+                }
+
+                const id = document.getElementById('room-form-id').value || `room-${Date.now()}`;
+                const name = document.getElementById('room-form-name').value.trim() || 'Luxury Suite';
+                const type = document.getElementById('room-form-type').value || 'Deluxe';
+                const price = Number(document.getElementById('room-form-price').value) || 200;
+                const capacity = Number(document.getElementById('room-form-capacity').value) || 2;
+                const available = document.getElementById('room-form-available').value === 'true';
+                
+                // Essential hotel specs values
+                const roomSize = document.getElementById('room-form-size').value.trim() || '480 sq.ft. (45 m²)';
+                const bedType = document.getElementById('room-form-bed').value.trim() || '1 King Size Bed';
+                const view = document.getElementById('room-form-view').value.trim() || 'Oceanfront Panoramic Horizon';
+                const bathroom = document.getElementById('room-form-bathroom').value.trim() || 'Marble Bath with Rainfall Shower';
+                const floor = document.getElementById('room-form-floor').value.trim() || 'High Floor';
+                const smokingPolicy = document.getElementById('room-form-smoking').value || '100% Non-Smoking Room';
+                const cancellationPolicy = document.getElementById('room-form-cancellation').value.trim() || 'Free cancellation up to 24h prior to check-in';
+
+                const description = document.getElementById('room-form-desc').value.trim() || 'Luxuriously appointed suite with bespoke appointments.';
+                const amenities = document.getElementById('room-form-amenities').value.split(',').map(s => s.trim()).filter(Boolean);
+                const existingImage = document.getElementById('room-form-existing-image').value || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80';
+                const fileInput = document.getElementById('room-form-image-file');
+
+                const saveWithImage = async (imageSrc) => {
+                    const allImages = [imageSrc];
+                    const roomPayload = { 
+                        id, name, type, price, capacity, available, 
+                        image: imageSrc, 
+                        images: allImages,
+                        roomSize, bedType, view, bathroom, floor, smokingPolicy, cancellationPolicy,
+                        description, amenities 
+                    };
+                    const existingIdx = stateRooms.findIndex(x => x.id === id);
+
+                    // 1. Direct Firestore write (Shared database source of truth)
+                    try {
+                        await setDoc(doc(db, 'rooms', id), roomPayload, { merge: true });
+                    } catch (fsErr) {
+                        console.error("Firestore room save error:", fsErr);
+                        showToast("Database Save Notice", "Notice saving to Firestore: " + (fsErr?.message || fsErr), "warning");
+                    }
+
+                    // 2. Server API sync (Primary source of truth & SSE broadcast)
+                    try {
+                        let res;
+                        if (existingIdx !== -1) {
+                            res = await fetch(`/api/rooms/${id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(roomPayload)
+                            });
+                            logAction("UPDATE_ROOM", `Updated suite ${name} ($${price})`);
+                        } else {
+                            res = await fetch('/api/rooms', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(roomPayload)
+                            });
+                            logAction("ADD_ROOM", `Created new suite ${name} ($${price})`);
+                        }
+
+                        if (!res || !res.ok) {
+                            const errText = res ? await res.text() : 'Server response error';
+                            console.warn("API room save notice:", errText);
+                        }
+                    } catch (apiErr) {
+                        console.warn("API room save error:", apiErr);
+                    }
+
+                    // 3. Update local state immediately & notify website
+                    if (existingIdx !== -1) {
+                        stateRooms[existingIdx] = roomPayload;
+                    } else {
+                        stateRooms.push(roomPayload);
+                    }
+
+                    notifySync();
+                    window.adminApp.closeRoomModal();
+                    renderAll();
+                    showToast("Suite Published!", `"${name}" is now live on the website!`, "success");
+                };
+
+                // Fast Canvas Compression for uploaded photo (maxDim 800, quality 0.75 -> under 80KB payload)
+                if (fileInput.files && fileInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (uploadEvent) => {
+                        const img = new Image();
+                        img.onload = async () => {
+                            try {
+                                const canvas = document.createElement('canvas');
+                                let width = img.width;
+                                let height = img.height;
+                                const maxDim = 800;
+                                if (width > height && width > maxDim) {
+                                    height = Math.round((height * maxDim) / width);
+                                    width = maxDim;
+                                } else if (height > maxDim) {
+                                    width = Math.round((width * maxDim) / height);
+                                    height = maxDim;
+                                }
+                                canvas.width = width;
+                                canvas.height = height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
+                                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+                                await saveWithImage(compressedBase64);
+                            } catch {
+                                await saveWithImage(existingImage);
+                            }
+                        };
+                        img.onerror = async () => {
+                            await saveWithImage(existingImage);
+                        };
+                        img.src = uploadEvent.target.result;
+                    };
+                    reader.onerror = async () => {
+                        await saveWithImage(existingImage);
+                    };
+                    reader.readAsDataURL(fileInput.files[0]);
+                } else {
+                    await saveWithImage(existingImage);
+                }
+            },
+
+            toggleRoomAvailability: async (id) => {
+                const r = stateRooms.find(x => x.id === id);
+                if (!r) return;
+                r.available = !r.available;
+
+                // 1. Direct Firestore update
+                try {
+                    await setDoc(doc(db, 'rooms', id), { available: r.available }, { merge: true });
+                } catch (fsErr) {
+                    console.warn("Firestore toggle notice:", fsErr);
+                }
+
+                // 2. Server API toggle
+                try {
+                    await fetch(`/api/rooms/${id}/toggle`, { method: 'PATCH' });
+                } catch (apiErr) {
+                    console.warn("API toggle error:", apiErr);
+                }
+
+                logAction("TOGGLE_ROOM", `Suite ${r.name} set to ${r.available ? 'Available' : 'Unavailable'}`);
+                notifySync();
+                renderAll();
+                showToast("Availability Updated", `"${r.name}" is now ${r.available ? 'Available' : 'Occupied / Maintenance'}.`, "success");
+            },
+
+            deleteRoom: (id) => {
+                const r = stateRooms.find(x => x.id === id);
+                window.adminApp.openConfirmModal({
+                    title: "Remove Suite from Website",
+                    subtitle: `Suite: ${r?.name || id}`,
+                    message: `Are you sure you want to permanently remove "${r?.name || id}"? It will immediately be unpublished and removed from the website for all guests.`,
+                    confirmText: "Yes, Remove Suite",
+                    onConfirm: async () => {
+                        // 1. Direct Firestore delete (Shared database source of truth)
+                        try {
+                            await deleteDoc(doc(db, 'rooms', id));
+                        } catch (fsErr) {
+                            console.error("Firestore room delete notice:", fsErr);
+                            showToast("Delete Error", "Could not remove from Firestore: " + (fsErr?.message || fsErr), "error");
+                        }
+
+                        // 2. Server API delete
+                        try {
+                            await fetch(`/api/rooms/${id}`, { method: 'DELETE' });
+                        } catch (apiErr) {
+                            console.warn("API room delete error:", apiErr);
+                        }
+
+                        stateRooms = stateRooms.filter(x => x.id !== id);
+                        logAction("DELETE_ROOM", `Removed suite ${r?.name || id} from website`);
+                        notifySync();
+                        renderAll();
+                        showToast("Suite Removed", `"${r?.name || id}" was successfully removed from the website.`, "success");
+                    }
+                });
+            },
+
+            triggerNewBookingModal: () => {
+                // Populate rooms in dropdown with rich attributes from live state
+                const selectEl = document.getElementById('booking-form-room');
+                if (selectEl && stateRooms.length > 0) {
+                    selectEl.innerHTML = stateRooms.map(r => `
+                        <option value="${r.id}" 
+                            data-price="${r.price}" 
+                            data-name="${r.name}"
+                            data-type="${r.type || 'Deluxe'}"
+                            data-image="${r.image || ''}"
+                            data-capacity="${r.capacity || 2}"
+                            data-amenities="${Array.isArray(r.amenities) ? r.amenities.join(', ') : ''}"
+                        >
+                            ${r.name} — $${r.price}/night (${r.type || 'Suite'})
+                        </option>
+                    `).join('');
+                }
+
+                // Set default dates
+                const today = new Date().toISOString().split('T')[0];
+                const outDate = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
+                const checkInEl = document.getElementById('booking-form-checkin');
+                const checkOutEl = document.getElementById('booking-form-checkout');
+                if (checkInEl) checkInEl.value = today;
+                if (checkOutEl) checkOutEl.value = outDate;
+
+                // Reset guest inputs
+                const nameEl = document.getElementById('booking-form-name');
+                const emailEl = document.getElementById('booking-form-email');
+                const phoneEl = document.getElementById('booking-form-phone');
+                const notesEl = document.getElementById('booking-form-notes');
+                if (nameEl) nameEl.value = '';
+                if (emailEl) emailEl.value = '';
+                if (phoneEl) phoneEl.value = '';
+                if (notesEl) notesEl.value = '';
+
+                window.adminApp.onBookingRoomChange();
+                document.getElementById('new-booking-modal').classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+            },
+
+            closeNewBookingModal: () => {
+                document.getElementById('new-booking-modal').classList.add('hidden');
+            },
+
+            onBookingRoomChange: () => {
+                const selectEl = document.getElementById('booking-form-room');
+                if (!selectEl) return;
+                const opt = selectEl.options[selectEl.selectedIndex];
+                if (!opt) return;
+
+                const name = opt.getAttribute('data-name') || 'Luxury Suite';
+                const type = opt.getAttribute('data-type') || 'Deluxe';
+                const price = opt.getAttribute('data-price') || '220';
+                const image = opt.getAttribute('data-image') || 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=600&q=80';
+                const capacity = opt.getAttribute('data-capacity') || '2';
+                const amenities = opt.getAttribute('data-amenities') || 'Ocean View, King Bed, Free WiFi';
+
+                const imgEl = document.getElementById('booking-room-img');
+                const nameEl = document.getElementById('booking-room-name');
+                const badgeEl = document.getElementById('booking-room-type-badge');
+                const rateEl = document.getElementById('booking-room-rate');
+                const capEl = document.getElementById('booking-room-capacity');
+                const amenEl = document.getElementById('booking-room-amenities');
+
+                if (imgEl) imgEl.src = image;
+                if (nameEl) nameEl.innerText = name;
+                if (badgeEl) badgeEl.innerText = type;
+                if (rateEl) rateEl.innerText = `$${price}`;
+                if (capEl) capEl.innerText = `Up to ${capacity} Guests`;
+                if (amenEl) amenEl.innerText = amenities;
+
+                const guestsInput = document.getElementById('booking-form-guests');
+                if (guestsInput) {
+                    guestsInput.max = capacity;
+                    if (Number(guestsInput.value) > Number(capacity)) {
+                        guestsInput.value = capacity;
+                    }
+                }
+
+                window.adminApp.recalcBookingPrice();
+            },
+
+            recalcBookingPrice: () => {
+                const selectEl = document.getElementById('booking-form-room');
+                const checkInEl = document.getElementById('booking-form-checkin');
+                const checkOutEl = document.getElementById('booking-form-checkout');
+                const priceEl = document.getElementById('booking-form-price');
+                const badgeEl = document.getElementById('booking-nights-badge');
+                const formulaEl = document.getElementById('booking-rate-formula');
+                if (!selectEl || !checkInEl || !checkOutEl || !priceEl) return;
+
+                const opt = selectEl.options[selectEl.selectedIndex];
+                const nightly = Number(opt?.getAttribute('data-price')) || 220;
+
+                const start = new Date(checkInEl.value || Date.now());
+                const end = new Date(checkOutEl.value || Date.now() + 86400000);
+                const diffTime = Math.max(end.getTime() - start.getTime(), 86400000);
+                const diffDays = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 1);
+
+                const total = nightly * diffDays;
+                priceEl.value = total;
+
+                if (badgeEl) badgeEl.innerText = `${diffDays} ${diffDays === 1 ? 'Night' : 'Nights'} Stay`;
+                if (formulaEl) formulaEl.innerText = `$${nightly} × ${diffDays} nights = $${total}`;
+            },
+
+            addBookingPerk: (perk) => {
+                const notesEl = document.getElementById('booking-form-notes');
+                if (!notesEl) return;
+                const current = notesEl.value.trim();
+                if (current.includes(perk)) return;
+                notesEl.value = current ? `${current}, ${perk}` : perk;
+                notesEl.focus();
+            },
+
+            handleNewBookingSubmit: async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('btn-save-booking');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Confirming Reservation...';
+                }
+
+                const guestName = document.getElementById('booking-form-name').value.trim() || 'Walk-in Guest';
+                const email = document.getElementById('booking-form-email').value.trim() || 'guest@aurelia.com';
+                const phone = document.getElementById('booking-form-phone').value.trim() || '';
+                const selectEl = document.getElementById('booking-form-room');
+                const opt = selectEl?.options[selectEl.selectedIndex];
+                const roomId = selectEl?.value || stateRooms[0]?.id || 'room-1';
+                const roomName = opt?.getAttribute('data-name') || stateRooms[0]?.name || 'Luxury Suite';
+                const roomType = opt?.getAttribute('data-type') || stateRooms[0]?.type || 'Deluxe';
+                const roomImage = opt?.getAttribute('data-image') || stateRooms[0]?.image || 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80';
+
+                const checkIn = document.getElementById('booking-form-checkin').value;
+                const checkOut = document.getElementById('booking-form-checkout').value;
+                const arrivalTime = document.getElementById('booking-form-arrival').value;
+                const guests = Number(document.getElementById('booking-form-guests').value) || 2;
+                const bedPreference = document.getElementById('booking-form-bedding').value;
+                const totalPrice = Number(document.getElementById('booking-form-price').value) || 440;
+                const paymentMethod = document.getElementById('booking-form-payment').value;
+                const status = document.getElementById('booking-form-status').value || 'Confirmed';
+                const specialRequests = document.getElementById('booking-form-notes').value.trim();
+
+                const start = new Date(checkIn || Date.now());
+                const end = new Date(checkOut || Date.now() + 86400000);
+                const diffTime = Math.max(end.getTime() - start.getTime(), 86400000);
+                const nights = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 1);
+
+                const newBooking = {
+                    id: "AUR-" + Math.floor(1000 + Math.random() * 9000),
+                    roomId,
+                    roomName,
+                    roomType,
+                    roomImage,
+                    guestName,
+                    email,
+                    phone,
+                    checkIn,
+                    checkOut,
+                    nights,
+                    guests,
+                    totalPrice,
+                    arrivalTime,
+                    bedPreference,
+                    paymentMethod,
+                    status,
+                    specialRequests: specialRequests || "Standard reservation registered by front desk",
+                    createdAt: new Date().toISOString()
+                };
+
+                // 1. Direct Firestore write (Shared database source of truth)
+                try {
+                    await setDoc(doc(db, 'bookings', newBooking.id), newBooking);
+                } catch (fsErr) {
+                    console.warn("Firestore new booking error:", fsErr);
+                }
+
+                // 2. Server API
+                try {
+                    await fetch('/api/bookings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newBooking)
+                    });
+                } catch (apiErr) {
+                    console.warn("API booking error:", apiErr);
+                }
+
+                stateBookings.unshift(newBooking);
+                newlyAddedBookingId = newBooking.id;
+                logAction("MANUAL_BOOKING", `Created reservation ${newBooking.id} for ${guestName} (${roomName})`);
+                notifySync();
+                if (bc) {
+                    try { bc.postMessage({ type: 'NEW_BOOKING', booking: newBooking }); } catch {}
+                }
+                window.adminApp.closeNewBookingModal();
+                renderAll();
+                showToast("Reservation Confirmed!", `Booking ${newBooking.id} created for ${guestName} (${roomName})!`, "success");
+
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-lucide="check" class="w-4 h-4 mr-1.5"></i><span>Confirm & Create Reservation</span>';
+                }
+            },
+
+            clearLogs: () => {
+                activityLogs = [];
+                renderLogs();
+            }
+        };
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                window.adminApp && window.adminApp.closeBookingModal();
+                window.adminApp && window.adminApp.closeRoomModal();
+                window.adminApp && window.adminApp.closeNewBookingModal();
+                window.adminApp && window.adminApp.closeConfirmModal();
+            }
+        });
+
+        // Click outside modal container backdrop to close
+        ['booking-modal', 'room-modal', 'new-booking-modal', 'confirm-modal'].forEach(modalId => {
+            const el = document.getElementById(modalId);
+            if (el) {
+                el.addEventListener('click', (e) => {
+                    if (e.target === el) {
+                        if (modalId === 'booking-modal') window.adminApp.closeBookingModal();
+                        if (modalId === 'room-modal') window.adminApp.closeRoomModal();
+                        if (modalId === 'new-booking-modal') window.adminApp.closeNewBookingModal();
+                        if (modalId === 'confirm-modal') window.adminApp.closeConfirmModal();
+                    }
+                });
+            }
+        });
+
+        // Initial render
+        renderAll();
+    </script>
+</body>
+</html>
